@@ -7,109 +7,124 @@
 <meta name="description" content="Aldo Arun designs aircraft structures and UAVs, from first sketch to flying prototype. Counter-UAS, MALE UAV, loitering munition, amphibious and VTOL projects.">
 <meta property="og:title" content="Aldo Arun, aerospace engineer">
 <meta property="og:description" content="Aircraft structures and UAV design, from first sketch to flying prototype.">
-<meta name="theme-color" content="#F8C61E">
-<script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('motion');</script>
+<meta name="theme-color" content="#090D16">
+<script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('motion', 'anim');</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  /* palette: sunburst on midnight, with shades of midnight for structure */
-  --sun:#F8C61E;
-  --midnight:#252C37;
-  --night:#1C222B;
-  --rule:#3A4350;
-  --dusk:#949CA8;
-  --pale:#E3E5E8;
+  /* palette: hangar carbon, glass surfaces, CAD hairlines, telemetry cyan, revision amber */
+  --bg-primary:#090D16;
+  --bg-surface:rgba(17,24,39,.75);
+  --bg-solid:#0F1523;            /* opaque stand-in for the glass, for SVG fills */
+  --bg-inset:rgba(9,13,22,.6);
+  --border-grid:rgba(148,163,184,.12);
+  --border-strong:rgba(148,163,184,.26);
+  --text-primary:#F8FAFC;
+  --text-muted:#94A3B8;
+  --accent-cyan:#38BDF8;
+  --accent-amber:#F59E0B;
+  --warn:#F87171;
 
-  /* roles: dark by default, .daylight flips them for the hero */
-  --sheet:var(--midnight);
-  --ink:var(--pale);
-  --ink-2:var(--dusk);
-  --line:var(--rule);
-  --edge:var(--rule);
-  --frame:var(--midnight);
-  --accent:var(--sun);
-  --warn:#EC8466;
-  --viewport:var(--night);
+  /* aliases used by the hero drawing and the hull tool's inline SVG */
+  --ink:var(--text-primary);
+  --ink-2:var(--text-muted);
+  --line:rgba(148,163,184,.38);
+  --sheet:var(--bg-solid);
+  --sun:var(--accent-cyan);
+  --dusk:var(--text-muted);
+  --night:var(--bg-inset);
+
+  --f-head:'Space Grotesk',system-ui,sans-serif;
+  --f-body:'Plus Jakarta Sans',system-ui,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,monospace;
 
   --ease:cubic-bezier(.65,0,.3,1);
 
-  /* type scale, ratio 1.25 from 18px */
-  --t-sm:.8125rem;  /* 13 */
-  --t-xs:.875rem;   /* 14 */
-  --t-body:1.125rem;/* 18 */
-  --t-lead:1.375rem;/* 22 */
-  --t-h3:1.75rem;   /* 28 */
-  --t-h2:clamp(2rem,1.2rem + 2.6vw,3.5rem);
-  --t-name:clamp(2.75rem,1rem + 6.4vw,7.5rem);
+  /* type scale, ratio 1.25 from 17px body */
+  --t-sm:.8125rem;
+  --t-xs:.875rem;
+  --t-body:1.0625rem;
+  --t-lead:1.3125rem;
+  --t-h3:1.625rem;
+  --t-h2:clamp(2rem,1.2rem + 2.4vw,3.25rem);
+  --t-name:clamp(2.75rem,1rem + 5.6vw,6.5rem);
 
   --gutter:clamp(16px,4vw,56px);
-  --sheet-pad:clamp(20px,3.6vw,64px);
+  --sheet-pad:clamp(20px,3.2vw,56px);
   --max:1480px;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:72px;-webkit-text-size-adjust:100%}
+html{scroll-behavior:smooth;scroll-padding-top:100px;-webkit-text-size-adjust:100%}
+html.lenis{scroll-behavior:auto}
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+.lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}
+.lenis.lenis-stopped{overflow:hidden}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
 }
-body{margin:0;background:var(--night);color:var(--ink);font-family:Archivo,system-ui,sans-serif;font-size:var(--t-body);line-height:1.55;font-stretch:100%;font-kerning:normal;overflow-x:hidden}
-::selection{background:var(--sun);color:var(--midnight)}
+body{margin:0;background:var(--bg-primary);color:var(--text-primary);font-family:var(--f-body);font-size:var(--t-body);line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+/* the live CAD workspace: a fixed 48px grid behind everything */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(248,250,252,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(248,250,252,.03) 1px,transparent 1px);
+  background-size:48px 48px}
+::selection{background:rgba(56,189,248,.3);color:var(--text-primary)}
 img,svg,iframe{display:block;max-width:100%}
-a{color:var(--ink);text-decoration-color:var(--line);text-decoration-thickness:1px;text-underline-offset:.2em;transition:color .25s,text-decoration-color .25s}
-a:hover{text-decoration-color:var(--accent)}
-:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-p,ul,ol,dl,h1,h2,h3,figure{margin:0}
-@media (max-width:560px){:root{--t-lead:1.1875rem}}
+a{color:var(--text-primary);text-decoration-color:var(--border-strong);text-decoration-thickness:1px;text-underline-offset:.22em;transition:color .25s,text-decoration-color .25s}
+a:hover{text-decoration-color:var(--accent-cyan)}
+:focus-visible{outline:2px solid var(--accent-cyan);outline-offset:3px;border-radius:4px}
+p,ul,ol,dl,h1,h2,h3,h4,figure{margin:0}
+h1,h2,h3,h4{font-family:var(--f-head);font-weight:600;letter-spacing:-.02em}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gutter)}
-.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:var(--sheet);padding:8px 12px;z-index:20}
+.skip{position:absolute;left:-999px;top:8px;background:var(--accent-cyan);color:var(--bg-primary);padding:8px 12px;z-index:40;border-radius:6px}
 .skip:focus{left:8px}
 
-/* ---------- daylight: the hero zone, a sunburst sheet with a hard edge into the dark page ---------- */
-.daylight{
-  --sheet:var(--sun);--ink:var(--midnight);--ink-2:color-mix(in srgb,var(--midnight) 80%,var(--sun));--line:color-mix(in srgb,var(--midnight) 55%,var(--sun));--edge:var(--midnight);--frame:var(--midnight);--accent:var(--midnight);
-  color-scheme:light;color:var(--ink);display:flow-root;background:var(--sun);
-}
+/* scroll progress */
+.progress{position:fixed;top:0;left:0;right:0;height:2px;z-index:50;background:var(--accent-cyan);transform-origin:0 50%;transform:scaleX(0);pointer-events:none}
 
-/* ---------- top bar: sunburst over the hero, midnight once past it ---------- */
-.bar{--ink:var(--midnight);--ink-2:color-mix(in srgb,var(--midnight) 80%,var(--sun));--accent:var(--midnight);position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--sun) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid color-mix(in srgb,var(--midnight) 18%,transparent);transition:background-color .5s var(--ease),border-color .5s var(--ease)}
-.bar.night{--ink:var(--pale);--ink-2:var(--dusk);--accent:var(--sun);background:color-mix(in srgb,var(--night) 90%,transparent);border-bottom-color:var(--rule)}
-.bar .wrap{position:relative;display:flex;align-items:center;gap:24px;min-height:56px}
-.bar-name{font-weight:800;font-stretch:125%;font-size:1rem;letter-spacing:-.01em;color:var(--ink);text-decoration:none;transition:color .5s var(--ease)}
-.bar nav{margin-left:auto;display:flex;gap:clamp(14px,2.4vw,32px);font-size:var(--t-xs)}
-.bar nav a{color:var(--ink-2);text-decoration:none;transition:color .4s var(--ease)}
-.bar nav a:hover,.bar nav a[aria-current]{color:var(--ink)}
-.bar .mark{position:absolute;left:0;bottom:-1px;width:1px;height:2px;background:var(--accent);transform-origin:0 50%;transform:translateX(var(--x,0px)) scaleX(var(--w,0));opacity:0;transition:transform .55s var(--ease),opacity .3s,background-color .5s var(--ease)}
-.bar .mark.on{opacity:1}
+/* ---------- floating glass bar ---------- */
+.bar{position:sticky;top:1rem;z-index:30;width:min(calc(100% - 2 * var(--gutter)),calc(var(--max) - 2 * var(--gutter)));margin:1rem auto 0;border:1px solid var(--border-grid);border-radius:14px;background:rgba(9,13,22,.55);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.bar .wrap{display:flex;align-items:center;gap:24px;min-height:56px;padding:0 clamp(14px,2vw,22px)}
+.bar-name{font-family:var(--f-head);font-weight:700;font-size:1.0625rem;letter-spacing:-.01em;color:var(--text-primary);text-decoration:none}
+.bar nav{margin-left:auto;display:flex;gap:clamp(4px,1vw,10px);font-size:var(--t-xs)}
+.bar nav a{position:relative;padding:8px 10px;border-radius:8px;color:var(--text-muted);text-decoration:none;transition:color .3s,background-color .3s}
+.bar nav a::after{content:"";position:absolute;left:10px;right:10px;bottom:3px;height:2px;border-radius:2px;background:var(--accent-cyan);transform:scaleX(0);transform-origin:0 50%;transition:transform .45s var(--ease)}
+.bar nav a:hover{color:var(--text-primary);background:rgba(148,163,184,.08)}
+.bar nav a[aria-current]{color:var(--text-primary)}
+.bar nav a[aria-current]::after{transform:scaleX(1)}
 @media (max-width:560px){.bar nav a:not(.keep){display:none}}
 
-/* ---------- sheets ---------- */
-.sheet{background:var(--sheet);border:1.5px solid var(--edge);box-shadow:0 0 0 6px var(--sheet),0 0 0 7px var(--frame);margin:clamp(28px,4vw,56px) 7px;padding:var(--sheet-pad)}
-@media (max-width:560px){.sheet{box-shadow:none;margin-inline:0}}
+/* ---------- glass sheets ---------- */
+.sheet{position:relative;background:var(--bg-surface);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--border-grid);border-radius:16px;margin:clamp(28px,4vw,56px) 0;padding:var(--sheet-pad)}
 
 /* ---------- hero ---------- */
+.daylight .sheet{margin-top:clamp(24px,3vw,40px)}
 .hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);grid-template-areas:"plan side" "plan block";gap:clamp(20px,3vw,48px) clamp(24px,3.4vw,56px);padding:clamp(16px,2.4vw,40px)}
 .hero .plan{grid-area:plan;align-self:center}
 .hero .side{grid-area:side;align-self:end}
 .hero .block{grid-area:block;align-self:end}
 @media (max-width:900px){.hero{grid-template-columns:minmax(0,1fr);grid-template-areas:"plan" "block" "side"}}
 
+/* the general-arrangement drawing, plotted in blueprint line weights */
 .ga{width:100%;height:auto;overflow:visible}
-.ga text{font-family:Archivo,system-ui,sans-serif;fill:var(--ink);font-size:46px;font-variant-numeric:tabular-nums}
-.ga .vt{font-size:58px;font-weight:600;font-stretch:112%}
-.ga .vs{font-size:40px;fill:var(--ink-2)}
-.ga .solid{fill:none;stroke:var(--ink);stroke-width:7;stroke-linejoin:round;stroke-linecap:round}
-.ga .fillsheet{fill:var(--sheet)}
-.ga .thin{fill:none;stroke:var(--ink);stroke-width:3.5}
-.ga .hidden{fill:none;stroke:var(--ink-2);stroke-width:3.5;stroke-dasharray:26 16}
+.ga text{font-family:var(--f-mono);fill:var(--text-muted);font-size:42px;font-variant-numeric:tabular-nums}
+.ga .vt{font-family:var(--f-head);font-size:56px;font-weight:600;fill:var(--text-primary)}
+.ga .vs{font-size:36px}
+.ga .solid{fill:none;stroke:#CBD5E1;stroke-width:6;stroke-linejoin:round;stroke-linecap:round}
+.ga .fillsheet{fill:var(--bg-solid)}
+.ga .thin{fill:none;stroke:#CBD5E1;stroke-width:3}
+.ga .hidden{fill:none;stroke:var(--text-muted);stroke-width:3;stroke-dasharray:26 16;opacity:.7}
 .ga .center{fill:none;stroke:var(--line);stroke-width:3;stroke-dasharray:90 18 14 18}
-.ga .dim path,.ga .note path{fill:none;stroke:var(--ink-2);stroke-width:3}
-.ga .dim .ext{stroke:var(--line)}
-.ga .note circle{fill:var(--ink-2)}
-.ga .wl{fill:none;stroke:var(--ink-2);stroke-width:3.5;stroke-dasharray:90 18 14 18}
-.ga marker path{fill:var(--ink-2);stroke:none}
+.ga .dim path,.ga .note path{fill:none;stroke:var(--accent-cyan);stroke-width:3;opacity:.85}
+.ga .dim .ext{stroke:var(--line);opacity:1}
+.ga .dim text{fill:var(--accent-cyan)}
+.ga .note circle{fill:var(--accent-cyan)}
+.ga .wl{fill:none;stroke:var(--accent-cyan);stroke-width:3.5;stroke-dasharray:90 18 14 18;opacity:.7}
+.ga marker path{fill:var(--accent-cyan);stroke:none}
 @media (max-width:640px){
   .ga-plan text{font-size:96px}
   .ga-plan .vt{font-size:110px}
@@ -119,194 +134,216 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
   .ga-side .vt{font-size:78px}
   .ga-side .solid{stroke-width:9}
 }
-
-/* plotting: one orchestrated moment on load, while the name widens */
 .motion .ga .solid{stroke-dasharray:1 1;stroke-dashoffset:1;animation:plot 1.15s var(--ease) forwards;animation-delay:calc(.15s + var(--i,0) * .16s)}
 .motion .ga .late{opacity:0;animation:appear .5s ease-out forwards;animation-delay:calc(1.55s + var(--i,0) * .09s)}
-.motion .name{animation:widen 1.6s var(--ease) .2s both}
 @keyframes plot{to{stroke-dashoffset:0}}
 @keyframes appear{to{opacity:1}}
-@keyframes widen{from{font-stretch:62%;letter-spacing:0;opacity:0}20%{opacity:1}to{font-stretch:125%;letter-spacing:-.035em}}
 
-/* title block */
-.block{border:1.5px solid var(--ink);display:grid;grid-template-columns:auto minmax(0,1fr)}
-.block > *{border-top:1px solid var(--line);padding:10px 14px}
-.block > :first-child{border-top:0}
+/* title block: hairlines draw in from the left on load */
+.block{border:1px solid var(--border-strong);border-radius:12px;overflow:hidden;background:var(--bg-inset);display:grid;grid-template-columns:auto minmax(0,1fr)}
+.block > *{position:relative;padding:12px 16px}
+.block > *::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--border-strong);transform-origin:0 50%;transform:scaleX(var(--hair,1))}
+.block > :first-child::before{display:none}
 .block .full{grid-column:1 / -1}
-.block .k{font-size:var(--t-sm);color:var(--ink-2);border-right:1px solid var(--line);padding-right:18px;align-self:stretch}
+.block .k{font-size:var(--t-sm);color:var(--text-muted);border-right:1px solid var(--border-grid);align-self:stretch;display:flex;align-items:center}
 .block .v{font-size:var(--t-xs)}
-.block .stat{font-weight:800;font-stretch:125%;font-size:var(--t-h3);line-height:1;font-variant-numeric:tabular-nums;align-self:center}
-.name{font-weight:800;font-stretch:125%;font-size:var(--t-name);line-height:.86;letter-spacing:-.035em;padding:18px 14px 14px}
-.role{font-size:var(--t-lead);line-height:1.3;font-stretch:96%;text-wrap:balance}
-.actions{display:flex;flex-wrap:wrap;gap:10px;padding:14px}
-.btn{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;font:600 var(--t-xs)/1 Archivo,sans-serif;font-stretch:108%;text-decoration:none;border:1.5px solid var(--ink);border-radius:2px;color:var(--ink);background:transparent;transition:background-color .25s,color .25s,border-color .25s}
-.btn:hover{background:var(--ink);color:var(--sheet)}
-.btn.primary{background:var(--ink);color:var(--sheet)}
-.btn.primary:hover{background:transparent;color:var(--ink)}
+.block .stat{font-family:var(--f-mono);font-weight:500;font-size:var(--t-h3);line-height:1;font-variant-numeric:tabular-nums;color:var(--accent-amber);align-self:center}
+.name{font-family:var(--f-head);font-weight:700;font-size:var(--t-name);line-height:.92;letter-spacing:-.045em;padding:20px 16px 14px!important}
+.role{font-size:var(--t-lead);line-height:1.35;color:var(--text-muted);text-wrap:balance}
+.anim .hero .block > *{opacity:0}
+.actions{display:flex;flex-wrap:wrap;gap:10px;padding:16px!important}
 
-/* ---------- intro ---------- */
+/* buttons: elevated on hover, pulled toward the pointer by --mx/--my */
+.btn{--mx:0px;--my:0px;--lift:0px;display:inline-flex;align-items:center;min-height:46px;padding:0 20px;font:600 var(--t-xs)/1 var(--f-head);text-decoration:none;border:1px solid var(--border-strong);border-radius:10px;color:var(--text-primary);background:rgba(148,163,184,.06);transform:translate(var(--mx),calc(var(--my) + var(--lift)));transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .3s,background-color .25s,border-color .25s,color .25s}
+.btn:hover{--lift:-2px;border-color:rgba(56,189,248,.5);box-shadow:0 12px 28px -14px rgba(56,189,248,.55)}
+.btn.primary{background:var(--accent-cyan);border-color:var(--accent-cyan);color:#04121C}
+.btn.primary:hover{background:#7DD3FC;border-color:#7DD3FC;box-shadow:0 14px 34px -12px rgba(56,189,248,.75)}
+
+/* ---------- intro + philosophy ---------- */
 .intro{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:24px var(--gutter);padding:clamp(48px,7vw,112px) 0 clamp(16px,3vw,40px)}
-.intro h2{grid-column:1 / span 6;font-size:var(--t-h2);line-height:1.02;font-weight:700;font-stretch:112%;letter-spacing:-.025em;text-wrap:balance}
+.intro h2{grid-column:1 / span 6;font-size:var(--t-h2);line-height:1.04;text-wrap:balance}
 .intro .copy{grid-column:7 / span 6;display:grid;gap:18px;max-width:62ch;align-self:end}
-.intro .copy p:first-child{font-size:var(--t-lead);line-height:1.45}
-.intro .fine{font-size:var(--t-xs);color:var(--ink-2)}
+.intro .copy p:first-child{font-size:var(--t-lead);line-height:1.5;color:#CBD5E1}
 @media (max-width:900px){.intro h2,.intro .copy{grid-column:1 / -1}}
+.motto{font-family:var(--f-head);font-weight:700;font-size:var(--t-h2);line-height:1.02;letter-spacing:-.035em;max-width:20ch;text-wrap:balance;padding-top:clamp(56px,8vw,128px)}
 
-/* ---------- sheet tags: the drawing's sheet number, with the original section name ---------- */
-.tag{display:inline-flex;width:fit-content;align-items:stretch;border:1.5px solid var(--ink);font-size:var(--t-sm);line-height:1;margin-bottom:clamp(14px,2vw,22px)}
-.tag b{font-weight:800;font-stretch:125%;padding:7px 10px;font-variant-numeric:tabular-nums}
-.tag span{padding:7px 10px;border-left:1px solid var(--line);color:var(--ink-2)}
+/* ---------- sheet tags ---------- */
+.tag{display:inline-flex;width:fit-content;align-items:stretch;border:1px solid var(--border-strong);border-radius:6px;overflow:hidden;font-family:var(--f-mono);font-size:var(--t-sm);line-height:1;margin-bottom:clamp(12px,1.6vw,18px)}
+.tag b{font-weight:600;padding:7px 10px;color:var(--accent-amber);font-variant-numeric:tabular-nums;background:rgba(245,158,11,.08)}
+.tag span{padding:7px 10px;border-left:1px solid var(--border-strong);color:var(--text-muted)}
 
-/* ---------- motto + project index ---------- */
-.motto{font-weight:800;font-stretch:125%;font-size:var(--t-h2);line-height:1;letter-spacing:-.03em;max-width:20ch;text-wrap:balance;padding-top:clamp(56px,8vw,128px)}
+/* ---------- project index ---------- */
 .index{padding-bottom:clamp(8px,2vw,24px)}
 .index-head{display:grid;gap:10px;margin-top:clamp(40px,5vw,72px);max-width:62ch}
-.index-head h2{font-size:var(--t-h3);font-weight:700;font-stretch:112%;line-height:1.1}
-.index-head p{font-size:var(--t-xs);color:var(--ink-2)}
-.dl{list-style:none;padding:0;margin:clamp(20px,2.4vw,32px) 0 0;border-top:1.5px solid var(--ink)}
-.dl li{display:grid;grid-template-columns:3.2em minmax(0,4fr) minmax(0,6fr) auto;gap:6px clamp(16px,2.4vw,40px);padding:18px 0;border-bottom:1px solid var(--line);align-items:baseline}
-.dl .n{font-weight:800;font-stretch:125%;font-size:var(--t-lead);line-height:1;font-variant-numeric:tabular-nums}
-.dl h3{font-size:var(--t-lead);font-weight:700;font-stretch:112%;line-height:1.2;text-wrap:balance}
-.dl .who{font-size:var(--t-xs);color:var(--ink-2);margin-top:6px}
-.dl .sum{font-size:var(--t-xs);color:var(--ink-2);max-width:64ch}
-.dl .go{font-size:var(--t-xs);font-weight:600;white-space:nowrap}
+.index-head h2{font-size:var(--t-h3);line-height:1.1}
+.index-head p{font-size:var(--t-xs);color:var(--text-muted)}
+.dl{list-style:none;padding:0;margin:clamp(20px,2.4vw,32px) 0 0;border-top:1px solid var(--border-strong)}
+.dl li{display:grid;grid-template-columns:3.2em minmax(0,4fr) minmax(0,6fr) auto;gap:6px clamp(16px,2.4vw,40px);padding:20px 0;border-bottom:1px solid var(--border-grid);align-items:baseline}
+.dl .n{font-family:var(--f-mono);font-weight:500;font-size:var(--t-body);color:var(--accent-amber);font-variant-numeric:tabular-nums}
+.dl h3{font-size:var(--t-lead);line-height:1.2;text-wrap:balance}
+.dl .who{font-family:var(--f-mono);font-size:var(--t-sm);color:var(--text-muted);margin-top:6px}
+.dl .sum{font-size:var(--t-xs);color:var(--text-muted);max-width:64ch}
+.dl .go{font-size:var(--t-xs);font-weight:600;white-space:nowrap;color:var(--accent-cyan);text-decoration:none}
+.dl .go:hover{text-decoration:underline}
 @media (max-width:760px){.dl li{grid-template-columns:2.6em minmax(0,1fr)}.dl li > :not(.n){grid-column:2}}
 
-/* ---------- projects ---------- */
-.project{display:grid;gap:clamp(48px,6vw,96px)}
-.project > header{position:relative;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:24px clamp(24px,3vw,56px);padding-bottom:clamp(24px,3vw,40px)}
-.project > header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--line);transform-origin:0 50%;transition:transform 1.3s var(--ease)}
-.motion .project > header:not(.drawn)::after{transform:scaleX(0)}
-.p-title{grid-column:1 / span 7;display:grid;gap:10px;align-content:start}
-.p-facts{grid-column:8 / span 5;display:grid;gap:24px;align-content:start}
-.project h2{font-size:var(--t-h2);line-height:1;font-weight:700;font-stretch:118%;letter-spacing:-.03em;text-wrap:balance}
-.project .who{font-size:var(--t-body);color:var(--ink-2)}
+/* ---------- projects: sticky header column + sections ---------- */
+.project{display:grid;gap:clamp(36px,5vw,64px)}
+.project > header{display:grid;gap:24px;align-content:start}
+.p-title{display:grid;gap:10px;align-content:start}
+.p-facts{display:grid;gap:22px;align-content:start}
+.project h2{font-size:clamp(1.9rem,1rem + 1.9vw,2.9rem);line-height:1.02;letter-spacing:-.03em;text-wrap:balance}
+.project .who{font-family:var(--f-mono);font-size:var(--t-sm);color:var(--text-muted)}
+.p-body{display:grid;gap:clamp(44px,5vw,72px);min-width:0}
+@media (min-width:1024px){
+  .project{grid-template-columns:minmax(340px,5fr) 7fr;gap:3rem;align-items:start}
+  .project > header{position:sticky;top:6rem}
+}
 .tags{list-style:none;padding:0;margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
-.tags li{font-size:var(--t-sm);line-height:1.2;padding:6px 10px;border:1px solid var(--line);border-radius:2px;color:var(--ink-2)}
-.tags li.note{border-style:dashed}
-.quote{margin:0;padding-left:18px;border-left:2px solid var(--line);font-size:var(--t-lead);line-height:1.35;font-stretch:96%;text-wrap:balance}
-@media (max-width:1000px){.p-title,.p-facts{grid-column:1 / -1}}
+.tags li{font-size:var(--t-sm);line-height:1.2;padding:6px 12px;border:1px solid var(--border-grid);border-radius:999px;color:var(--text-muted);background:rgba(148,163,184,.04)}
+.tags li.note{border-style:dashed;border-color:var(--border-strong)}
+.quote{margin:0;padding-left:16px;border-left:2px solid var(--accent-amber);font-family:var(--f-head);font-size:var(--t-lead);line-height:1.35;text-wrap:balance;color:#E2E8F0}
 
-/* a project reads as rows: notes on the left, the view they describe on the right */
-.row{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:28px clamp(24px,3vw,56px);align-items:start}
-.row > .text{grid-column:1 / span 5}
-.row > .view{grid-column:6 / span 7}
-.row.solo > .text{grid-column:1 / span 7}
-.row > .wide{grid-column:1 / -1}
-.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:48px clamp(24px,3vw,56px);align-items:start}
-.text{display:grid;gap:16px;align-content:start}
-.text h3{font-size:var(--t-lead);line-height:1.2;font-weight:700;font-stretch:112%;letter-spacing:-.01em;display:flex;gap:12px;align-items:baseline;text-wrap:balance}
-.text h3 .n{font-size:var(--t-sm);font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
-.text h4{margin:0;font-size:var(--t-body);font-weight:650}
-.text p{max-width:64ch}
-.text ul,.text ol{margin:0;padding-left:1.4em;display:grid;gap:8px;max-width:64ch}
+/* spec bento: 2×2 telemetry tiles */
+.specs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0}
+.specs > div{padding:12px 14px;border:1px solid var(--border-grid);border-radius:10px;background:var(--bg-inset);transition:border-color .3s,box-shadow .3s}
+.specs > div:last-child:nth-child(odd){grid-column:1 / -1}
+.specs > div:hover{border-color:rgba(56,189,248,.45);box-shadow:0 0 0 1px rgba(56,189,248,.12),0 0 26px -8px rgba(56,189,248,.45)}
+.specs dt{font-size:var(--t-sm);color:var(--text-muted)}
+.specs dd{margin:4px 0 0;font-family:var(--f-mono);font-size:var(--t-body);font-weight:500;font-variant-numeric:tabular-nums;color:var(--text-primary)}
+
+/* a section: notes, then the view they describe */
+.row{display:grid;gap:22px;align-items:start}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:44px clamp(24px,3vw,48px);align-items:start}
+.text{display:grid;gap:14px;align-content:start}
+.text h3{font-size:var(--t-lead);line-height:1.2;display:flex;gap:12px;align-items:baseline;text-wrap:balance}
+.text h3 .n{font-family:var(--f-mono);font-size:var(--t-sm);font-weight:500;color:var(--accent-amber);font-variant-numeric:tabular-nums}
+.text h4{font-size:var(--t-body);font-weight:600}
+.text p{max-width:66ch;color:#CBD5E1}
+.text ul,.text ol{margin:0;padding-left:1.4em;display:grid;gap:8px;max-width:66ch;color:#CBD5E1}
 .text .dash{list-style-type:"—  "}
 .text .dash .dash{margin-top:8px}
-.text li::marker{color:var(--ink-2)}
-@media (max-width:1000px){.row > .text,.row > .view,.row.solo > .text{grid-column:1 / -1}}
+.text li::marker{color:var(--text-muted)}
 
-/* loitering munition stages, lit by the mission animation as it plays */
-.stages{list-style:none;padding:0!important;gap:2px!important}
-.stages li{display:grid;grid-template-columns:5.2em minmax(0,1fr);gap:2px 14px;padding:10px 14px;border-left:2px solid var(--line);transition:border-color .35s,opacity .35s,background-color .35s}
-.stages b{font-weight:600;font-size:var(--t-sm);color:var(--ink-2);font-variant-numeric:tabular-nums}
-.stages .st{font-weight:700}
-.stages .d{grid-column:2;font-size:var(--t-xs);color:var(--ink-2)}
-.stages.live li{opacity:.5}
-.stages.live li.done{opacity:.75}
-.stages.live li.on{opacity:1;border-left-color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,transparent)}
-
-/* amphibious hull sizing tool */
-.tool{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1px;background:var(--line);border:1.5px solid var(--line)}
-.tool > div{background:var(--night);padding:clamp(16px,2vw,28px);display:grid;gap:14px;align-content:start}
-.tool h4{margin:0;font-size:var(--t-body);font-weight:700;font-stretch:112%}
-.tool .t-sub{font-size:var(--t-sm);color:var(--ink-2);margin-top:-8px}
-.tool label{display:grid;gap:6px;font-size:var(--t-xs)}
-.tool label > span{display:flex;justify-content:space-between;gap:12px}
-.tool label output{font-variant-numeric:tabular-nums;color:var(--ink)}
-.tool input[type=range]{width:100%;height:22px;margin:0;accent-color:var(--sun);cursor:pointer}
-.readouts{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin:4px 0 0}
-.readouts dt{font-size:var(--t-sm);color:var(--ink-2)}
-.readouts dd{margin:2px 0 0;font-size:var(--t-lead);font-weight:600;font-variant-numeric:tabular-nums}
-.verdict{font-size:var(--t-xs);font-weight:600;color:var(--sun)}
-.verdict.short{color:var(--warn)}
-.tool svg{width:100%;height:auto}
-.tool svg text{font-family:Archivo,system-ui,sans-serif;font-variant-numeric:tabular-nums;fill:var(--ink-2)}
-.ch-axis{fill:none;stroke:color-mix(in srgb,var(--ink) 14%,transparent)}
-.ch-limit{stroke:var(--warn);stroke-width:1.6;stroke-dasharray:7 5}
-.ch-curve{fill:none;stroke:var(--ink);stroke-width:2.4}
-.ch-dot{fill:var(--sun)}
-.tool svg .lim{fill:var(--warn)}
-.tool svg .mk{fill:var(--sun)}
-@media (max-width:760px){.tool{grid-template-columns:minmax(0,1fr)}}
-
-/* parts-list style spec table */
-.specs{display:grid;grid-template-columns:auto minmax(0,1fr);border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);font-size:var(--t-xs)}
-.specs dt,.specs dd{margin:0;padding:8px 0;border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
-.specs dt{color:var(--ink-2);padding-right:24px}
-.specs dd{font-variant-numeric:tabular-nums;font-weight:500}
-.specs dt:first-of-type,.specs dd:first-of-type{border-top:0}
-
-/* drawing views: CAD viewports on the sheet, faded in once loaded */
-.view{display:grid;gap:10px}
-.view .slot{position:relative;width:100%;background:var(--viewport);aspect-ratio:16 / 10;min-height:340px;border:1.5px solid var(--line);overflow:hidden}
+/* CAD viewport windows */
+.view{display:grid;border:1px solid var(--border-grid);border-radius:12px;overflow:hidden;background:var(--bg-inset)}
+.view::before{content:"";height:22px;border-bottom:1px solid var(--border-grid);
+  background:
+    repeating-linear-gradient(90deg,rgba(148,163,184,.4) 0 1px,transparent 1px 60px) left bottom / 100% 9px no-repeat,
+    repeating-linear-gradient(90deg,rgba(148,163,184,.18) 0 1px,transparent 1px 12px) left bottom / 100% 5px no-repeat,
+    rgba(17,24,39,.9)}
+.view .slot{position:relative;width:100%;background:#0B111C;aspect-ratio:16 / 10;min-height:320px;overflow:hidden}
 .view.tall .slot{aspect-ratio:4 / 3}
 .view .slot iframe{position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity .8s var(--ease)}
 .view .slot iframe.ready{opacity:1}
-.view .wait{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-2);font-size:var(--t-xs)}
-.view figcaption{font-size:var(--t-sm);color:var(--ink-2)}
-.cfd{display:grid;grid-template-columns:1fr 1fr;gap:16px 12px}
+.view .wait{position:absolute;inset:0;display:grid;place-items:center;color:var(--text-muted);font-family:var(--f-mono);font-size:var(--t-sm)}
+.view > figcaption{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--border-grid);font-family:var(--f-mono);font-size:12.5px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+.view > figcaption::before{content:"";flex:none;width:7px;height:7px;border-radius:2px;background:var(--accent-cyan);box-shadow:0 0 10px rgba(56,189,248,.8)}
+.cfd{display:grid;grid-template-columns:1fr 1fr;gap:16px 12px;padding:14px}
 .cfd figure{display:grid;gap:8px;align-content:start}
-.cfd img{width:100%;height:auto;aspect-ratio:16 / 9;object-fit:contain;border:1.5px solid var(--line);background:#fff}
+.cfd img{width:100%;height:auto;aspect-ratio:16 / 9;object-fit:contain;border-radius:8px;background:#fff}
+.cfd figcaption{font-family:var(--f-mono);font-size:12px;color:var(--text-muted)}
 @media (max-width:560px){.view .slot,.view.tall .slot{min-height:0;aspect-ratio:4 / 5}.cfd{grid-template-columns:1fr}}
 
-/* ---------- experience: revision block ---------- */
-.section-head{display:grid;gap:10px;margin-bottom:clamp(22px,3vw,40px);max-width:62ch}
-.section-head h2{font-size:var(--t-h2);line-height:1;font-weight:700;font-stretch:118%;letter-spacing:-.03em}
-.section-head p{color:var(--ink-2)}
+/* loitering munition stages, lit by the mission animation */
+.stages{list-style:none;padding:0!important;gap:2px!important}
+.stages li{display:grid;grid-template-columns:5.6em minmax(0,1fr);gap:2px 14px;padding:10px 14px;border-left:2px solid var(--border-strong);border-radius:0 8px 8px 0;transition:border-color .35s,opacity .35s,background-color .35s}
+.stages b{font-family:var(--f-mono);font-weight:500;font-size:var(--t-sm);color:var(--text-muted);font-variant-numeric:tabular-nums}
+.stages .st{font-weight:600;color:var(--text-primary)}
+.stages .d{grid-column:2;font-size:var(--t-xs);color:var(--text-muted)}
+.stages.live li{opacity:.5}
+.stages.live li.done{opacity:.75}
+.stages.live li.on{opacity:1;border-left-color:var(--accent-cyan);background:rgba(56,189,248,.07)}
+
+/* amphibious hull sizing tool */
+.tool{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1px;background:var(--border-grid)}
+.tool > div{background:#0B111C;padding:clamp(16px,2vw,26px);display:grid;gap:14px;align-content:start}
+.tool h4{font-size:var(--t-body)}
+.tool .t-sub{font-family:var(--f-mono);font-size:12.5px;color:var(--text-muted);margin-top:-8px}
+.tool label{display:grid;gap:6px;font-size:var(--t-xs)}
+.tool label > span{display:flex;justify-content:space-between;gap:12px}
+.tool label output{font-family:var(--f-mono);font-variant-numeric:tabular-nums;color:var(--accent-cyan)}
+.tool input[type=range]{width:100%;height:22px;margin:0;accent-color:var(--accent-cyan);cursor:pointer}
+.readouts{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin:4px 0 0}
+.readouts dt{font-family:var(--f-mono);font-size:12px;color:var(--text-muted)}
+.readouts dd{margin:2px 0 0;font-family:var(--f-mono);font-size:var(--t-lead);font-weight:500;font-variant-numeric:tabular-nums}
+.verdict{font-size:var(--t-xs);font-weight:600;color:var(--accent-cyan)}
+.verdict.short{color:var(--warn)}
+.tool svg{width:100%;height:auto}
+.tool svg text{font-family:var(--f-mono);font-variant-numeric:tabular-nums;fill:var(--text-muted)}
+.ch-axis{fill:none;stroke:rgba(148,163,184,.16)}
+.ch-limit{stroke:var(--warn);stroke-width:1.6;stroke-dasharray:7 5}
+.ch-curve{fill:none;stroke:var(--text-primary);stroke-width:2.4}
+.ch-dot{fill:var(--accent-cyan)}
+.tool svg .lim{fill:var(--warn)}
+.tool svg .mk{fill:var(--accent-cyan)}
+@media (max-width:760px){.tool{grid-template-columns:minmax(0,1fr)}}
+
+/* ---------- section heads ---------- */
+.section-head{display:grid;gap:6px;margin-bottom:clamp(22px,3vw,40px);max-width:62ch}
+.section-head h2{font-size:var(--t-h2);line-height:1.02;letter-spacing:-.03em}
+
+/* ---------- experience: kinetic revision block ---------- */
 .revs{width:100%;border-collapse:collapse;font-size:var(--t-xs)}
-.revs th{text-align:left;font-weight:600;font-size:var(--t-sm);color:var(--ink-2);padding:10px 16px 10px 0;border-bottom:1.5px solid var(--ink)}
-.revs td{vertical-align:top;padding:16px 16px 16px 0;border-bottom:1px solid var(--line)}
-.revs .rev{font-weight:800;font-stretch:125%;font-size:var(--t-h3);line-height:1;width:2.2em}
-.revs tr.current .rev span{background:var(--accent);color:var(--midnight);padding:2px 8px;margin-left:-8px}
-.revs .when{width:11em;white-space:nowrap;color:var(--ink-2);font-variant-numeric:tabular-nums}
-.revs .what b{display:block;font-size:var(--t-body);font-weight:650}
-.revs .what span{color:var(--ink-2)}
-.revs .what p{margin-top:6px;max-width:64ch}
+.revs th{text-align:left;font-family:var(--f-mono);font-weight:500;font-size:12px;color:var(--text-muted);padding:10px 16px 10px 12px;border-bottom:1px solid var(--border-strong)}
+.revs td{vertical-align:top;padding:18px 16px 18px 12px;border-bottom:1px solid var(--border-grid)}
+.revs tbody tr{transition:opacity .3s,transform .35s cubic-bezier(.2,.8,.2,1)}
+.revs tbody:hover tr{opacity:.6}
+.revs tbody tr:hover{opacity:1;transform:translateX(6px)}
+.revs tbody td:first-child{transition:box-shadow .3s}
+.revs tbody tr:hover td:first-child{box-shadow:inset 2px 0 0 var(--accent-cyan)}
+.revs .rev{width:4em}
+.revs .rev span{display:inline-grid;place-items:center;width:2.2rem;height:2.2rem;border-radius:7px;font-family:var(--f-mono);font-weight:600;font-size:1rem;color:var(--accent-amber);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.45);box-shadow:0 0 20px -6px rgba(245,158,11,.55)}
+.revs tr.current .rev span{color:var(--accent-cyan);background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.55);box-shadow:0 0 22px -4px rgba(56,189,248,.6)}
+.revs .when{width:13em;white-space:nowrap;color:var(--text-muted);font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums;padding-top:22px}
+.revs .what b{display:block;font-family:var(--f-head);font-size:var(--t-body);font-weight:600}
+.revs .what span{color:var(--text-muted)}
+.revs .what p{margin-top:6px;max-width:66ch;color:#CBD5E1}
 @media (max-width:760px){
   .revs thead{display:none}
-  .revs tr{display:grid;grid-template-columns:2.4em minmax(0,1fr);border-bottom:1px solid var(--line);padding:14px 0}
-  .revs td{border:0;padding:0}
+  .revs tr{display:grid;grid-template-columns:3em minmax(0,1fr);border-bottom:1px solid var(--border-grid);padding:14px 0}
+  .revs td{border:0;padding:0 0 0 8px}
   .revs .rev{grid-row:1 / span 2}
-  .revs .when{padding-bottom:4px}
+  .revs .when{padding:0 0 4px 8px}
 }
 
-/* ---------- capabilities ---------- */
-.caps{list-style:none;margin:0;padding:0;columns:4 240px;column-gap:var(--gutter);font-size:var(--t-xs);border-top:1.5px solid var(--ink)}
-.caps li{break-inside:avoid;padding:8px 0;border-bottom:1px solid var(--line)}
+/* ---------- capabilities: pill tags with a cursor spotlight ---------- */
+.caps{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.caps li{--mouse-x:-999px;--mouse-y:-999px;position:relative;padding:9px 15px;border:1px solid var(--border-grid);border-radius:999px;font-size:var(--t-xs);color:#CBD5E1;
+  background:radial-gradient(140px circle at var(--mouse-x) var(--mouse-y),rgba(56,189,248,.1),transparent 70%),var(--bg-inset);
+  transition:transform .3s cubic-bezier(.2,.8,.2,1),color .25s}
+.caps li::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;pointer-events:none;
+  background:radial-gradient(120px circle at var(--mouse-x) var(--mouse-y),rgba(56,189,248,.75),transparent 70%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.caps li:hover{transform:translateY(-2px);color:var(--text-primary)}
 
 /* ---------- research + education ---------- */
 .two{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:40px var(--gutter)}
 .two > div{grid-column:span 6}
 @media (max-width:900px){.two > div{grid-column:1 / -1}}
-.papers{list-style:none;padding:0;display:grid;gap:26px}
-.papers li{display:grid;grid-template-columns:3em minmax(0,1fr);gap:4px 14px}
-.papers .pno{grid-row:span 3;font-weight:800;font-stretch:125%;font-size:var(--t-body);line-height:1.35;font-variant-numeric:tabular-nums}
-.papers b{display:block;font-size:var(--t-body);font-weight:650;line-height:1.35;text-wrap:balance}
-.papers p{font-size:var(--t-xs);color:var(--ink-2);max-width:60ch}
-.edu{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px 24px;font-size:var(--t-xs)}
-.edu dt{font-weight:800;font-stretch:125%;font-size:var(--t-lead);line-height:1;font-variant-numeric:tabular-nums}
+.papers{list-style:none;padding:0;display:grid;gap:12px}
+.papers li{display:grid;grid-template-columns:3em minmax(0,1fr);gap:4px 14px;padding:18px;border:1px solid var(--border-grid);border-radius:12px;background:var(--bg-inset);transition:border-color .3s}
+.papers li:hover{border-color:var(--border-strong)}
+.papers .pno{grid-row:span 3;font-family:var(--f-mono);font-weight:500;color:var(--accent-amber);font-variant-numeric:tabular-nums;line-height:1.5}
+.papers b{display:block;font-family:var(--f-head);font-size:var(--t-body);font-weight:600;line-height:1.35;text-wrap:balance}
+.papers p{font-size:var(--t-xs);color:var(--text-muted);max-width:60ch}
+.papers a{color:var(--accent-cyan);text-decoration:none;font-weight:600}
+.papers a .arr{display:inline-block;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.papers a:hover .arr{transform:translate(3px,-3px)}
+.edu{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px 24px;font-size:var(--t-xs)}
+.edu dt{font-family:var(--f-mono);font-weight:500;font-size:var(--t-body);color:var(--accent-amber);font-variant-numeric:tabular-nums;line-height:1.4}
 .edu dd{margin:0}
-.edu dd b{display:block;font-size:var(--t-body);font-weight:650}
-.edu dd span{color:var(--ink-2)}
+.edu dd b{display:block;font-family:var(--f-head);font-size:var(--t-body);font-weight:600}
+.edu dd span{color:var(--text-muted)}
 
 /* ---------- contact ---------- */
-.contact{padding:clamp(56px,8vw,128px) 0 clamp(40px,5vw,72px)}
-.contact h2{font-size:var(--t-h2);font-weight:700;font-stretch:118%;letter-spacing:-.03em;line-height:1;max-width:16ch;text-wrap:balance}
-.mail{display:inline-block;margin:clamp(20px,3vw,36px) 0;font-weight:800;font-stretch:125%;font-size:clamp(1.5rem,.6rem + 4.2vw,4.75rem);letter-spacing:-.03em;line-height:1;color:var(--ink);text-decoration-color:var(--accent);text-decoration-thickness:.09em;text-underline-offset:.14em;overflow-wrap:anywhere}
-.mail:hover{color:var(--accent)}
+.contact{padding:clamp(56px,8vw,128px) 0 clamp(40px,5vw,72px);transform-origin:50% 30%}
+.contact h2{font-size:var(--t-h2);line-height:1.02;letter-spacing:-.035em;max-width:16ch;text-wrap:balance}
+.mail{display:inline-block;margin:clamp(20px,3vw,36px) 0;font-family:var(--f-head);font-weight:700;font-size:clamp(1.5rem,.6rem + 4vw,4.5rem);letter-spacing:-.035em;line-height:1;color:var(--text-primary);text-decoration-color:var(--accent-cyan);text-decoration-thickness:.07em;text-underline-offset:.14em;overflow-wrap:anywhere}
+.mail:hover{color:var(--accent-cyan)}
 .reach{display:flex;flex-wrap:wrap;gap:12px 32px;font-size:var(--t-body)}
-.reach span{color:var(--ink-2)}
-.legal{margin-top:clamp(40px,5vw,72px);padding-top:18px;border-top:1px solid var(--rule);font-size:var(--t-sm);color:var(--ink-2);max-width:88ch}
+.reach span{color:var(--text-muted)}
+.legal{margin-top:clamp(40px,5vw,72px);padding-top:18px;border-top:1px solid var(--border-grid);font-size:var(--t-sm);color:var(--text-muted);max-width:88ch}
 </style>
 </head>
 <body>
@@ -482,52 +519,54 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
       </div>
       <div class="p-facts">
         <dl class="specs">
-          <dt>Design speed</dt><dd>~300 km/h</dd>
-          <dt>Programme</dt><dd>Counter-UAS Sandbox</dd>
-          <dt>Printed sections</dt><dd>4</dd>
+          <div><dt>Design speed</dt><dd>~300 km/h</dd></div>
+          <div><dt>Programme</dt><dd>Counter-UAS Sandbox</dd></div>
+          <div><dt>Printed sections</dt><dd>4</dd></div>
         </dl>
         <blockquote class="quote"><p>“Designed it. Printed it. Integrated it.”</p></blockquote>
       </div>
     </header>
-
-    <section class="row solo">
-      <div class="text">
-        <h3>Overview</h3>
-        <p>As Lead Engineer, I ran the full development of a tactical small counter-UAS (CUAS) interceptor for Canadian defence missions, from the first concept to a working prototype. The drone was built as a prototype to compete in Canada's Counter-UAS Sandbox program and was designed for speeds of about 300 km/h. Drone threats change almost daily, so the design focused on low cost, easy field repair, and the ability to mass-produce in weeks rather than months. I used rapid prototyping, mainly 3D printing, to go from design to test hardware quickly and to make changes easily as requirements evolved. The result is a domestically designed and built airframe that can be produced, repaired and upgraded quickly.</p>
-      </div>
-    </section>
-
-    <section class="row">
-      <div class="text">
-        <h3>Printed airframe hub</h3>
-        <p>The airframe was split into four sections, each sized to print in one piece on the Bambu Lab X1-Carbon's 256 × 256 × 256 mm build plate:</p>
-        <ul class="dash">
-          <li>Nose section (PETG), which houses the camera for target acquisition</li>
-          <li>Forward fuselage (PETG)</li>
-          <li>Aft fuselage (CF-nylon), which carries the wings and motors</li>
-          <li>Tail section (PETG)</li>
-        </ul>
-        <p>The cone shape required a vertically stacked avionics column, with the flight controller, ESCs, power distribution and communication systems layered in a tight space. The wiring order was planned so every connection stayed reachable as each layer went in.</p>
-        <p>Everything comes together in one balanced configuration: the camera in the nose, motors on the wings, and battery management and propulsion integrated through the core.</p>
-      </div>
-      <figure class="view" data-view="CUAV Assembly 3D.html" data-title="3D assembly animation of the C-UAS interceptor: aft fuselage with wings, forward fuselage, nose, tail and pusher motors">
-        <div class="slot"><div class="wait">Loading the 3D model</div></div>
-        <figcaption>3D assembly · four printed sections · drag to rotate</figcaption>
-      </figure>
-    </section>
-
-    <section class="row">
-      <div class="text">
-        <h3>Manufacturing</h3>
-        <p>CF-nylon sections were printed with a hardened-steel nozzle in the X1-Carbon's enclosed chamber, with the filament dried before each print.</p>
-        <p>Layer height, print speed, wall count, infill and supports were tuned in the slicer, over several rounds, until the surface was smooth enough for high-speed flight.</p>
-        <p>Heat-set threaded inserts, pressed into the printed parts with a soldering iron, give reusable bolted joints between sections and hard mounting points for the avionics. A damaged section can be reprinted and swapped without rebuilding the airframe.</p>
-      </div>
-      <figure class="view" data-view="CUAV Print Anim.html" data-title="Bambu Lab X1-Carbon printing the green C-UAS airframe hub and sliding the build plate out">
-        <div class="slot"><div class="wait">Loading the animation</div></div>
-        <figcaption>3D printing</figcaption>
-      </figure>
-    </section>
+    <div class="p-body">
+  
+      <section class="row solo">
+        <div class="text">
+          <h3>Overview</h3>
+          <p>As Lead Engineer, I ran the full development of a tactical small counter-UAS (CUAS) interceptor for Canadian defence missions, from the first concept to a working prototype. The drone was built as a prototype to compete in Canada's Counter-UAS Sandbox program and was designed for speeds of about 300 km/h. Drone threats change almost daily, so the design focused on low cost, easy field repair, and the ability to mass-produce in weeks rather than months. I used rapid prototyping, mainly 3D printing, to go from design to test hardware quickly and to make changes easily as requirements evolved. The result is a domestically designed and built airframe that can be produced, repaired and upgraded quickly.</p>
+        </div>
+      </section>
+  
+      <section class="row">
+        <div class="text">
+          <h3>Printed airframe hub</h3>
+          <p>The airframe was split into four sections, each sized to print in one piece on the Bambu Lab X1-Carbon's 256 × 256 × 256 mm build plate:</p>
+          <ul class="dash">
+            <li>Nose section (PETG), which houses the camera for target acquisition</li>
+            <li>Forward fuselage (PETG)</li>
+            <li>Aft fuselage (CF-nylon), which carries the wings and motors</li>
+            <li>Tail section (PETG)</li>
+          </ul>
+          <p>The cone shape required a vertically stacked avionics column, with the flight controller, ESCs, power distribution and communication systems layered in a tight space. The wiring order was planned so every connection stayed reachable as each layer went in.</p>
+          <p>Everything comes together in one balanced configuration: the camera in the nose, motors on the wings, and battery management and propulsion integrated through the core.</p>
+        </div>
+        <figure class="view" data-view="CUAV Assembly 3D.html" data-title="3D assembly animation of the C-UAS interceptor: aft fuselage with wings, forward fuselage, nose, tail and pusher motors">
+          <div class="slot"><div class="wait">Loading the 3D model</div></div>
+          <figcaption>3D assembly · four printed sections · drag to rotate</figcaption>
+        </figure>
+      </section>
+  
+      <section class="row">
+        <div class="text">
+          <h3>Manufacturing</h3>
+          <p>CF-nylon sections were printed with a hardened-steel nozzle in the X1-Carbon's enclosed chamber, with the filament dried before each print.</p>
+          <p>Layer height, print speed, wall count, infill and supports were tuned in the slicer, over several rounds, until the surface was smooth enough for high-speed flight.</p>
+          <p>Heat-set threaded inserts, pressed into the printed parts with a soldering iron, give reusable bolted joints between sections and hard mounting points for the avionics. A damaged section can be reprinted and swapped without rebuilding the airframe.</p>
+        </div>
+        <figure class="view" data-view="CUAV Print Anim.html" data-title="Bambu Lab X1-Carbon printing the green C-UAS airframe hub and sliding the build plate out">
+          <div class="slot"><div class="wait">Loading the animation</div></div>
+          <figcaption>3D printing</figcaption>
+        </figure>
+      </section>
+    </div>
   </article>
 
   <!-- ===== 02 MALE ===== -->
@@ -541,103 +580,105 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
       </div>
       <div class="p-facts">
         <dl class="specs">
-          <dt>Airframe</dt><dd>780 kg</dd>
-          <dt>Role</dt><dd>ISTAR</dd>
-          <dt>Programme</dt><dd>BEL · ADE (DRDO)</dd>
+          <div><dt>Airframe</dt><dd>780 kg</dd></div>
+          <div><dt>Role</dt><dd>ISTAR</dd></div>
+          <div><dt>Programme</dt><dd>BEL · ADE (DRDO)</dd></div>
         </dl>
         <blockquote class="quote"><p>“Every airframe is a negotiation between stress, systems and flight science. I designed the structure where they all agree.”</p></blockquote>
       </div>
     </header>
-
-    <section class="row">
-      <div class="text">
-        <h3>Overview</h3>
-        <p>An indigenous Medium-Altitude Long-Endurance (MALE) aircraft developed jointly by Bharat Electronics Limited (BEL) and the Aeronautical Development Establishment (ADE) of DRDO, for Intelligence, Surveillance, Target Acquisition and Reconnaissance (ISTAR) missions for the Indian armed forces.</p>
-      </div>
-      <figure class="view" data-view="MALE UAV Exploded.html" data-title="Animated exploded view of the MALE UAV airframe with labelled assemblies">
-        <div class="slot"><div class="wait">Loading the 3D model</div></div>
-        <figcaption>3D model and exploded view</figcaption>
-      </figure>
-    </section>
-
-    <section class="row">
-      <div class="text">
-        <h3>Mission profile</h3>
-        <p>Intelligence, Surveillance, Target Acquisition and Reconnaissance (ISTAR) as well as armed operational roles.</p>
-      </div>
-      <figure class="view" data-view="MALE Mission.html" data-title="MALE UAV ISTAR mission profile: take-off, climb, transit, loiter surveillance, target acquisition, armed strike, return and landing">
-        <div class="slot"><div class="wait">Loading the animation</div></div>
-      </figure>
-    </section>
-
-    <section class="row solo">
-      <div class="text">
-        <h3>My role and highlights</h3>
-        <ul class="dash">
-          <li>Designed the airframe and Led the structural layout, assembly design and released documentation in 3DEXPERIENCE and CATIA V5, version-controlled through ENOVIA.</li>
-          <li>Optimized airframe structures for weight, strength and manufacturability, taking designs from concept to production-ready drawings.</li>
-          <li>Designed the installation of aircraft systems with the stress, aerodynamics, propulsion, avionics, electrical and landing gear teams, resolving interfaces between those systems and the structure.</li>
-        </ul>
-      </div>
-    </section>
-
-    <section class="row">
-      <div class="text">
-        <h3>Airframe construction</h3>
-        <ul class="dash">
-          <li>Hybrid structure: carbon-fibre composites form the main load-carrying structure and skins, and metallic parts are used where loads are concentrated or fire protection is needed.</li>
-          <li>Wing skins, strakes and fuselage shell: CFRP foam-sandwich construction, giving high stiffness for low weight.</li>
-          <li>Wing spars and ribs: monolithic (solid) CFRP laminates that carry the main bending and shear loads.</li>
-          <li>Control surfaces: CFRP with a foam core, for lightweight, stiff moving surfaces.</li>
-          <li>Bulkheads and longerons: machined aluminium alloys at the major load paths.</li>
-          <li>Equipment frames: bolted aluminium assemblies.</li>
-        </ul>
-      </div>
-      <figure class="view" data-view="MALE Internal Structure.html" data-title="Animated assembly of fuselage bulkheads and longerons">
-        <div class="slot"><div class="wait">Loading the 3D model</div></div>
-        <figcaption>Internal structure of one avionics bay</figcaption>
-      </figure>
-    </section>
-
-    <div class="notes">
-      <section class="text">
-        <h3>Composite wing spar</h3>
-        <ul class="dash">
-          <li>A domestically developed CFRP sandwich spar for the canard-configuration main spar (load carrying member), designed for strength, stiffness and producibility.</li>
-          <li>It delivered a 15% gain in structural efficiency and a 10% weight reduction over the baseline design.</li>
-          <li>The design was taken through to production with design-for-manufacture drawings, tooling requirements for moulding, and an engineering bill of materials (EBOM) kept accurate through every design change.</li>
-        </ul>
+    <div class="p-body">
+  
+      <section class="row">
+        <div class="text">
+          <h3>Overview</h3>
+          <p>An indigenous Medium-Altitude Long-Endurance (MALE) aircraft developed jointly by Bharat Electronics Limited (BEL) and the Aeronautical Development Establishment (ADE) of DRDO, for Intelligence, Surveillance, Target Acquisition and Reconnaissance (ISTAR) missions for the Indian armed forces.</p>
+        </div>
+        <figure class="view" data-view="MALE UAV Exploded.html" data-title="Animated exploded view of the MALE UAV airframe with labelled assemblies">
+          <div class="slot"><div class="wait">Loading the 3D model</div></div>
+          <figcaption>3D model and exploded view</figcaption>
+        </figure>
       </section>
-      <section class="text">
-        <h3>3D design and 2D manufacturing drawings</h3>
-        <ul class="dash">
-          <li>3D models of parts and assemblies were built in 3DEXPERIENCE and CATIA V5, covering the structural layout, assembly sequence and system installation interfaces.</li>
-          <li>Detailed 2D part and assembly drawings with GD&amp;T (geometric dimensioning and tolerancing) define the parts, processes, build sequence and special instructions for the shop floor.</li>
-          <li>Supplementary planning documents and build-sequence definitions were written to make production more efficient and reduce errors traced through engineering change reports.</li>
-          <li>All data is version-controlled in ENOVIA. Drawings, work instructions, process specifications and compliance documents were released through a formal engineering change process (ECR/ECO/PCR) that assessed each change's impact on design, cost and schedule.</li>
-        </ul>
+  
+      <section class="row">
+        <div class="text">
+          <h3>Mission profile</h3>
+          <p>Intelligence, Surveillance, Target Acquisition and Reconnaissance (ISTAR) as well as armed operational roles.</p>
+        </div>
+        <figure class="view" data-view="MALE Mission.html" data-title="MALE UAV ISTAR mission profile: take-off, climb, transit, loiter surveillance, target acquisition, armed strike, return and landing">
+          <div class="slot"><div class="wait">Loading the animation</div></div>
+        </figure>
+      </section>
+  
+      <section class="row solo">
+        <div class="text">
+          <h3>My role and highlights</h3>
+          <ul class="dash">
+            <li>Designed the airframe and Led the structural layout, assembly design and released documentation in 3DEXPERIENCE and CATIA V5, version-controlled through ENOVIA.</li>
+            <li>Optimized airframe structures for weight, strength and manufacturability, taking designs from concept to production-ready drawings.</li>
+            <li>Designed the installation of aircraft systems with the stress, aerodynamics, propulsion, avionics, electrical and landing gear teams, resolving interfaces between those systems and the structure.</li>
+          </ul>
+        </div>
+      </section>
+  
+      <section class="row">
+        <div class="text">
+          <h3>Airframe construction</h3>
+          <ul class="dash">
+            <li>Hybrid structure: carbon-fibre composites form the main load-carrying structure and skins, and metallic parts are used where loads are concentrated or fire protection is needed.</li>
+            <li>Wing skins, strakes and fuselage shell: CFRP foam-sandwich construction, giving high stiffness for low weight.</li>
+            <li>Wing spars and ribs: monolithic (solid) CFRP laminates that carry the main bending and shear loads.</li>
+            <li>Control surfaces: CFRP with a foam core, for lightweight, stiff moving surfaces.</li>
+            <li>Bulkheads and longerons: machined aluminium alloys at the major load paths.</li>
+            <li>Equipment frames: bolted aluminium assemblies.</li>
+          </ul>
+        </div>
+        <figure class="view" data-view="MALE Internal Structure.html" data-title="Animated assembly of fuselage bulkheads and longerons">
+          <div class="slot"><div class="wait">Loading the 3D model</div></div>
+          <figcaption>Internal structure of one avionics bay</figcaption>
+        </figure>
+      </section>
+  
+      <div class="notes">
+        <section class="text">
+          <h3>Composite wing spar</h3>
+          <ul class="dash">
+            <li>A domestically developed CFRP sandwich spar for the canard-configuration main spar (load carrying member), designed for strength, stiffness and producibility.</li>
+            <li>It delivered a 15% gain in structural efficiency and a 10% weight reduction over the baseline design.</li>
+            <li>The design was taken through to production with design-for-manufacture drawings, tooling requirements for moulding, and an engineering bill of materials (EBOM) kept accurate through every design change.</li>
+          </ul>
+        </section>
+        <section class="text">
+          <h3>3D design and 2D manufacturing drawings</h3>
+          <ul class="dash">
+            <li>3D models of parts and assemblies were built in 3DEXPERIENCE and CATIA V5, covering the structural layout, assembly sequence and system installation interfaces.</li>
+            <li>Detailed 2D part and assembly drawings with GD&amp;T (geometric dimensioning and tolerancing) define the parts, processes, build sequence and special instructions for the shop floor.</li>
+            <li>Supplementary planning documents and build-sequence definitions were written to make production more efficient and reduce errors traced through engineering change reports.</li>
+            <li>All data is version-controlled in ENOVIA. Drawings, work instructions, process specifications and compliance documents were released through a formal engineering change process (ECR/ECO/PCR) that assessed each change's impact on design, cost and schedule.</li>
+          </ul>
+        </section>
+      </div>
+  
+      <section class="row solo">
+        <div class="text">
+          <h3>Integral composite fuel tank</h3>
+          <ul class="dash">
+            <li>The fuel tanks are built into the wing strake composite structure, so the aircraft structure itself holds the fuel. This saves weight and increases fuel volume for long endurance.</li>
+            <li>Tank boundaries, joints and access provisions were designed around sealing and leak prevention.</li>
+            <li>Colour-coded sealing model: a zero-thickness, colour-coded surface model was built on the wing strake CAD model, going beyond the standard 2D drawing set. It gave the manufacturing team a 3D visual map of every surface treatment:
+              <ul class="dash">
+                <li>Primer: surface preparation, so the sealant bonds firmly and lastingly to the composite.</li>
+                <li>Class A (brushable) sealant: applied along all fuel faying surfaces.</li>
+                <li>Class B (paste) sealant: applied to corners, fillets, fasteners and overlapping joints, closing every path fuel could escape through.</li>
+                <li>Structural bonding surfaces: where the composite ribs join the upper and lower skins.</li>
+              </ul>
+            </li>
+            <li>Step-by-step assembly procedure: each step is linked to the colour-coded model, from surface preparation through priming, sealing and final bonding. The sequence is set up so that no step can be done out of order without the missing earlier step being visible on the model.</li>
+            <li>Result: the first leak test passed with zero leaks across the whole tank assembly, and no rework was needed.</li>
+          </ul>
+        </div>
       </section>
     </div>
-
-    <section class="row solo">
-      <div class="text">
-        <h3>Integral composite fuel tank</h3>
-        <ul class="dash">
-          <li>The fuel tanks are built into the wing strake composite structure, so the aircraft structure itself holds the fuel. This saves weight and increases fuel volume for long endurance.</li>
-          <li>Tank boundaries, joints and access provisions were designed around sealing and leak prevention.</li>
-          <li>Colour-coded sealing model: a zero-thickness, colour-coded surface model was built on the wing strake CAD model, going beyond the standard 2D drawing set. It gave the manufacturing team a 3D visual map of every surface treatment:
-            <ul class="dash">
-              <li>Primer: surface preparation, so the sealant bonds firmly and lastingly to the composite.</li>
-              <li>Class A (brushable) sealant: applied along all fuel faying surfaces.</li>
-              <li>Class B (paste) sealant: applied to corners, fillets, fasteners and overlapping joints, closing every path fuel could escape through.</li>
-              <li>Structural bonding surfaces: where the composite ribs join the upper and lower skins.</li>
-            </ul>
-          </li>
-          <li>Step-by-step assembly procedure: each step is linked to the colour-coded model, from surface preparation through priming, sealing and final bonding. The sequence is set up so that no step can be done out of order without the missing earlier step being visible on the model.</li>
-          <li>Result: the first leak test passed with zero leaks across the whole tank assembly, and no rework was needed.</li>
-        </ul>
-      </div>
-    </section>
   </article>
 
   <!-- ===== 03 Loitering munition ===== -->
@@ -651,139 +692,141 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
       </div>
       <div class="p-facts">
         <dl class="specs">
-          <dt>Class</dt><dd>15 kg</dd>
-          <dt>Launch</dt><dd>Tube launcher</dd>
-          <dt>Sub-systems</dt><dd>6</dd>
+          <div><dt>Class</dt><dd>15 kg</dd></div>
+          <div><dt>Launch</dt><dd>Tube launcher</dd></div>
+          <div><dt>Sub-systems</dt><dd>6</dd></div>
         </dl>
         <blockquote class="quote"><p>“Small enough to carry. Strong enough to launch. Precise enough to count.”</p></blockquote>
       </div>
     </header>
-
-    <section class="row solo">
-      <div class="text">
-        <h3>Overview</h3>
-        <p>A loitering munition is a single-use precision strike system that stays under operator control until the moment of impact. These systems are designed to be man-portable, short-range, fast, and stealthy. They suit short missions, so they need little fuel and carry small warheads that hit targets accurately while limiting collateral damage.</p>
-        <p>Because they are expendable, loitering munitions cost far less than bomber aircraft or missiles. They are also quick to deploy and need few operators and little maintenance. Paired with lightweight modern avionics, they can operate autonomously without human input.</p>
-        <p>Their low radar cross-section (RCS), along with small visual and thermal signatures, makes loitering munitions difficult to detect and intercept. On future battlefields, the side that uses them most effectively may well gain the decisive advantage.</p>
-      </div>
-    </section>
-
-    <section class="row solo">
-      <div class="text">
-        <h3>Sub systems</h3>
-        <p>The overall system is catagorized into three subsystems as following:</p>
-        <ol>
-          <li>EO/IR system</li>
-          <li>Autonoumous system</li>
-          <li>Propulsion system</li>
-          <li>Ground control station (GCS)</li>
-          <li>Launcher system</li>
-          <li>Payload system</li>
-        </ol>
-      </div>
-    </section>
-
-    <section class="row">
-      <div class="text">
-        <h3>Mission profile</h3>
-        <ol class="stages">
-          <li data-lm-st="0"><b>Stage 1</b><span class="st">Launch</span><span class="d">The loiter munition UAV will be launched via a portable Tube launcher.</span></li>
-          <li data-lm-st="1"><b>Stage 2</b><span class="st">Climb</span><span class="d">This involves low signature climb of the UAV to a predetermined altitude (Autonomous).</span></li>
-          <li data-lm-st="2"><b>Stage 3</b><span class="st">Cruise</span><span class="d">Semi-autonomous and target check (detection). Image processing and target geo-location</span></li>
-          <li data-lm-st="3"><b>Stage 4</b><span class="st">Loiter</span><span class="d">The UAV loiters around the target at an altitude where it can perform recognition and to gather additional data.</span></li>
-          <li data-lm-st="4"><b>Stage 5</b><span class="st">Descent</span><span class="d">The UAV descends to an altitude where it can identify the target.</span></li>
-          <li data-lm-st="5"><b>Stage 6</b><span class="st">Attack</span><span class="d">On confirmation, the UAV executes a high-speed dive and destroys the target.</span></li>
-        </ol>
-      </div>
-      <figure class="view" data-view="LM Mission.html?nolist" data-title="Animated loitering munition mission profile">
-        <div class="slot"><div class="wait">Loading the animation</div></div>
-        <figcaption>Launch to attack</figcaption>
-      </figure>
-    </section>
-
-    <section class="row">
-      <div class="text">
-        <h3><span class="n">01</span>EO/IR system</h3>
-        <p>The system pairs a visible-light camera with a thermal camera, so it can see by day and by night. From altitude it can detect a target, then recognise, identify and track it. A laser pointer keeps continuous lock on moving targets.</p>
-      </div>
-      <figure class="view" data-view="LM EOIR Anim.html" data-title="EO/IR nose gimbal placement animation">
-        <div class="slot"><div class="wait">Loading the animation</div></div>
-      </figure>
-    </section>
-
-    <section class="row">
-      <div class="text">
-        <h3><span class="n">02</span>Autonomous system</h3>
-        <p>The autopilot is a compact flight control computer, customized for full autonomy through vision-based object tracking. It manages every phase of flight: launch, climb, cruise, loiter and highly dynamic manoeuvres. It should be proven to operate in GNSS-denied environments, and it should include multiple redundancies to guard against failure.</p>
-        <p>The camera handles detection, recognition, identification and tracking using both visible and infrared imaging. This data travels to the ground control station (GCS) through the autopilot's integrated data link, where the live video can be viewed and monitored in the GCS software. To loiter over a target, the system flies a defined trajectory above it, using the target position calculated by vision-based geolocation algorithms.</p>
-      </div>
-      <figure class="view" data-view="LM Subsystem Anim.html?v=auto" data-title="Vision-based detection and geo-location animation">
-        <div class="slot"><div class="wait">Loading the animation</div></div>
-      </figure>
-    </section>
-
-    <section class="row">
-      <div class="text">
-        <h3><span class="n">03</span>Propulsion system</h3>
-        <h4>Electric propulsion</h4>
-        <p>The electric motor selected should provide optimum power for the UAV. This will allow for smokeless and very low acoustic signature. The accessories include compatable ESC and propeller.</p>
-      </div>
-      <figure class="view" data-view="LM Propeller Anim.html" data-title="Pusher folding propeller deploy animation">
-        <div class="slot"><div class="wait">Loading the animation</div></div>
-      </figure>
-    </section>
-
-    <section class="row">
-      <div class="text">
-        <h3><span class="n">04</span>Ground control station (GCS)</h3>
-        <p>The autopilot integrates with a joystick, a data link and ground control station (GCS) which comprises of a rugged hand-held display for running the GCS software. The software should have a specific protocols and parameters for target drones and includes every feature needed to run a loitering munition mission.</p>
-      </div>
-      <figure class="view" data-view="LM Subsystem Anim.html?v=gcs" data-title="Ground control station animation">
-        <div class="slot"><div class="wait">Loading the animation</div></div>
-      </figure>
-    </section>
-
-    <section class="row">
-      <div class="text">
-        <h3><span class="n">05</span>Launcher</h3>
-        <p>The tube launcher is man-portable and vehicle portable which can be assembled quickly. Its modular parts break down into loads small enough to carry, so a small crew can move it on foot and set it up in the field in a short time without special tools. The tube stores the folded airframe and protects it during transport, so the system stays ready to launch as soon as it's in position. Setup and maintenance are simple, which lets the team deploy, launch and relocate with minimal time on site.</p>
-      </div>
-      <figure class="view" data-view="LM Subsystem Anim.html?v=launcher" data-title="Tube launcher catapult launch animation">
-        <div class="slot"><div class="wait">Loading the animation</div></div>
-        <figcaption>Launch sequence · tube launcher</figcaption>
-      </figure>
-    </section>
-
-    <section class="row solo">
-      <div class="text">
-        <h3><span class="n">06</span>Munition system</h3>
-        <p>The payload and its trigger mechanism were selected and integrated with support from munitions specialists. My work focused on the airframe side of that integration: providing a dedicated payload bay, defining the mounting and structural interfaces, and making sure the added mass kept the aircraft's centre of gravity and structural margins within limits. This let the payload be integrated without changing the airframe design.</p>
-        <h4>Types of fuzes:</h4>
-        <ul class="dash">
-          <li>Point detonation</li>
-          <li>Proximity detonation</li>
-          <li>Barometric fuse.</li>
-        </ul>
-        <h4>Types of warhead:</h4>
-        <ul class="dash">
-          <li>Fuel air explosives (FAE)</li>
-          <li>High explosive anti-tank (HEAT)</li>
-          <li>High explosive fragmentation (HEF)</li>
-        </ul>
-      </div>
-    </section>
-
-    <section class="row">
-      <div class="text">
-        <h3><span class="n">07</span>Airframe</h3>
-        <p>The initial airframe was of conventional design and was constructed out of wood with carbon composite sheeting and an epoxy finish. This model serves as a prototype flown at low altitudes and low speeds to fulfil the autonomous operation testing phase.</p>
-        <p>A more robust delta design was intended to be built completely using composites as a product for higher altitudes, high speeds and stealth operations.</p>
-      </div>
-      <figure class="view" data-view="LM Wing Fold 3D.html" data-title="3D model of the loitering munition with folding wings stowing and deploying">
-        <div class="slot"><div class="wait">Loading the 3D model</div></div>
-        <figcaption>3D CAD model · drag to rotate</figcaption>
-      </figure>
-    </section>
+    <div class="p-body">
+  
+      <section class="row solo">
+        <div class="text">
+          <h3>Overview</h3>
+          <p>A loitering munition is a single-use precision strike system that stays under operator control until the moment of impact. These systems are designed to be man-portable, short-range, fast, and stealthy. They suit short missions, so they need little fuel and carry small warheads that hit targets accurately while limiting collateral damage.</p>
+          <p>Because they are expendable, loitering munitions cost far less than bomber aircraft or missiles. They are also quick to deploy and need few operators and little maintenance. Paired with lightweight modern avionics, they can operate autonomously without human input.</p>
+          <p>Their low radar cross-section (RCS), along with small visual and thermal signatures, makes loitering munitions difficult to detect and intercept. On future battlefields, the side that uses them most effectively may well gain the decisive advantage.</p>
+        </div>
+      </section>
+  
+      <section class="row solo">
+        <div class="text">
+          <h3>Sub systems</h3>
+          <p>The overall system is catagorized into three subsystems as following:</p>
+          <ol>
+            <li>EO/IR system</li>
+            <li>Autonoumous system</li>
+            <li>Propulsion system</li>
+            <li>Ground control station (GCS)</li>
+            <li>Launcher system</li>
+            <li>Payload system</li>
+          </ol>
+        </div>
+      </section>
+  
+      <section class="row">
+        <div class="text">
+          <h3>Mission profile</h3>
+          <ol class="stages">
+            <li data-lm-st="0"><b>Stage 1</b><span class="st">Launch</span><span class="d">The loiter munition UAV will be launched via a portable Tube launcher.</span></li>
+            <li data-lm-st="1"><b>Stage 2</b><span class="st">Climb</span><span class="d">This involves low signature climb of the UAV to a predetermined altitude (Autonomous).</span></li>
+            <li data-lm-st="2"><b>Stage 3</b><span class="st">Cruise</span><span class="d">Semi-autonomous and target check (detection). Image processing and target geo-location</span></li>
+            <li data-lm-st="3"><b>Stage 4</b><span class="st">Loiter</span><span class="d">The UAV loiters around the target at an altitude where it can perform recognition and to gather additional data.</span></li>
+            <li data-lm-st="4"><b>Stage 5</b><span class="st">Descent</span><span class="d">The UAV descends to an altitude where it can identify the target.</span></li>
+            <li data-lm-st="5"><b>Stage 6</b><span class="st">Attack</span><span class="d">On confirmation, the UAV executes a high-speed dive and destroys the target.</span></li>
+          </ol>
+        </div>
+        <figure class="view" data-view="LM Mission.html?nolist" data-title="Animated loitering munition mission profile">
+          <div class="slot"><div class="wait">Loading the animation</div></div>
+          <figcaption>Launch to attack</figcaption>
+        </figure>
+      </section>
+  
+      <section class="row">
+        <div class="text">
+          <h3><span class="n">01</span>EO/IR system</h3>
+          <p>The system pairs a visible-light camera with a thermal camera, so it can see by day and by night. From altitude it can detect a target, then recognise, identify and track it. A laser pointer keeps continuous lock on moving targets.</p>
+        </div>
+        <figure class="view" data-view="LM EOIR Anim.html" data-title="EO/IR nose gimbal placement animation">
+          <div class="slot"><div class="wait">Loading the animation</div></div>
+        </figure>
+      </section>
+  
+      <section class="row">
+        <div class="text">
+          <h3><span class="n">02</span>Autonomous system</h3>
+          <p>The autopilot is a compact flight control computer, customized for full autonomy through vision-based object tracking. It manages every phase of flight: launch, climb, cruise, loiter and highly dynamic manoeuvres. It should be proven to operate in GNSS-denied environments, and it should include multiple redundancies to guard against failure.</p>
+          <p>The camera handles detection, recognition, identification and tracking using both visible and infrared imaging. This data travels to the ground control station (GCS) through the autopilot's integrated data link, where the live video can be viewed and monitored in the GCS software. To loiter over a target, the system flies a defined trajectory above it, using the target position calculated by vision-based geolocation algorithms.</p>
+        </div>
+        <figure class="view" data-view="LM Subsystem Anim.html?v=auto" data-title="Vision-based detection and geo-location animation">
+          <div class="slot"><div class="wait">Loading the animation</div></div>
+        </figure>
+      </section>
+  
+      <section class="row">
+        <div class="text">
+          <h3><span class="n">03</span>Propulsion system</h3>
+          <h4>Electric propulsion</h4>
+          <p>The electric motor selected should provide optimum power for the UAV. This will allow for smokeless and very low acoustic signature. The accessories include compatable ESC and propeller.</p>
+        </div>
+        <figure class="view" data-view="LM Propeller Anim.html" data-title="Pusher folding propeller deploy animation">
+          <div class="slot"><div class="wait">Loading the animation</div></div>
+        </figure>
+      </section>
+  
+      <section class="row">
+        <div class="text">
+          <h3><span class="n">04</span>Ground control station (GCS)</h3>
+          <p>The autopilot integrates with a joystick, a data link and ground control station (GCS) which comprises of a rugged hand-held display for running the GCS software. The software should have a specific protocols and parameters for target drones and includes every feature needed to run a loitering munition mission.</p>
+        </div>
+        <figure class="view" data-view="LM Subsystem Anim.html?v=gcs" data-title="Ground control station animation">
+          <div class="slot"><div class="wait">Loading the animation</div></div>
+        </figure>
+      </section>
+  
+      <section class="row">
+        <div class="text">
+          <h3><span class="n">05</span>Launcher</h3>
+          <p>The tube launcher is man-portable and vehicle portable which can be assembled quickly. Its modular parts break down into loads small enough to carry, so a small crew can move it on foot and set it up in the field in a short time without special tools. The tube stores the folded airframe and protects it during transport, so the system stays ready to launch as soon as it's in position. Setup and maintenance are simple, which lets the team deploy, launch and relocate with minimal time on site.</p>
+        </div>
+        <figure class="view" data-view="LM Subsystem Anim.html?v=launcher" data-title="Tube launcher catapult launch animation">
+          <div class="slot"><div class="wait">Loading the animation</div></div>
+          <figcaption>Launch sequence · tube launcher</figcaption>
+        </figure>
+      </section>
+  
+      <section class="row solo">
+        <div class="text">
+          <h3><span class="n">06</span>Munition system</h3>
+          <p>The payload and its trigger mechanism were selected and integrated with support from munitions specialists. My work focused on the airframe side of that integration: providing a dedicated payload bay, defining the mounting and structural interfaces, and making sure the added mass kept the aircraft's centre of gravity and structural margins within limits. This let the payload be integrated without changing the airframe design.</p>
+          <h4>Types of fuzes:</h4>
+          <ul class="dash">
+            <li>Point detonation</li>
+            <li>Proximity detonation</li>
+            <li>Barometric fuse.</li>
+          </ul>
+          <h4>Types of warhead:</h4>
+          <ul class="dash">
+            <li>Fuel air explosives (FAE)</li>
+            <li>High explosive anti-tank (HEAT)</li>
+            <li>High explosive fragmentation (HEF)</li>
+          </ul>
+        </div>
+      </section>
+  
+      <section class="row">
+        <div class="text">
+          <h3><span class="n">07</span>Airframe</h3>
+          <p>The initial airframe was of conventional design and was constructed out of wood with carbon composite sheeting and an epoxy finish. This model serves as a prototype flown at low altitudes and low speeds to fulfil the autonomous operation testing phase.</p>
+          <p>A more robust delta design was intended to be built completely using composites as a product for higher altitudes, high speeds and stealth operations.</p>
+        </div>
+        <figure class="view" data-view="LM Wing Fold 3D.html" data-title="3D model of the loitering munition with folding wings stowing and deploying">
+          <div class="slot"><div class="wait">Loading the 3D model</div></div>
+          <figcaption>3D CAD model · drag to rotate</figcaption>
+        </figure>
+      </section>
+    </div>
   </article>
 
   <!-- ===== 04 Amphibious ===== -->
@@ -797,140 +840,142 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
       </div>
       <div class="p-facts">
         <dl class="specs">
-          <dt>Span</dt><dd>2.5 m</dd>
-          <dt>Beam</dt><dd>260 mm</dd>
-          <dt>Wing</dt><dd>E421</dd>
+          <div><dt>Span</dt><dd>2.5 m</dd></div>
+          <div><dt>Beam</dt><dd>260 mm</dd></div>
+          <div><dt>Wing</dt><dd>E421</dd></div>
         </dl>
         <blockquote class="quote"><p>“Where the runway is water, every surface must fly clean and float true.”</p></blockquote>
       </div>
     </header>
-
-    <section class="row">
-      <div class="text">
-        <h3>Overview</h3>
-        <p>Designed an amphibious UAV to collect water samples from flowing rivers — a stepped planing hull sized from seaplane practice, carrying a sampling probe below the after body.</p>
-      </div>
-      <figure class="view" data-view="Amphibious UAV Model.html" data-title="Interactive CAD model of the amphibious UAV">
-        <div class="slot"><div class="wait">Loading the 3D model</div></div>
-        <figcaption>3D CAD model · drag to rotate</figcaption>
-      </figure>
-    </section>
-
-    <section class="row">
-      <div class="text">
-        <h3>Mission profile</h3>
-        <p>The same airframe flown through its sortie: transit to the reach, powered approach along the channel, touchdown on the step, hull-borne drift while the probe draws the sample, then a planing take-off run and climb-out.</p>
-      </div>
-      <figure class="view" data-view="Amphibious Mission.html" data-title="Animated water-sampling mission profile">
-        <div class="slot"><div class="wait">Loading the animation</div></div>
-        <figcaption>River water sampling</figcaption>
-      </figure>
-    </section>
-
-    <section class="row">
-      <div class="text">
-        <h3>My role and highlights</h3>
-        <p>The airframe uses three materials, each placed where it works best. The surfaces that meet the water, the hull bottom and the floats, are shaped from foam and laminated with a composite layup. This gives them a smooth, watertight skin and a clean hydrodynamic profile, so the aircraft can land on water, sit steady and take off again. The wing and fuselage are built on a wooden primary structure, which keeps the airframe light, stiff and easy to repair in the field. The E421 high wing was assessed at low Reynolds number in XFLR. The tail surfaces use a composite sandwich construction for high stiffness at minimum weight, keeping the control surfaces precise in both air and spray.</p>
-      </div>
-      <figure class="view tall" data-view="Amphibious Structure 3D.html" data-title="Animated 3D model of the amphibious UAV primary structure from the CATIA STL">
-        <div class="slot"><div class="wait">Loading the 3D model</div></div>
-        <figcaption>Primary structure · ribs · spars · frames · skin</figcaption>
-      </figure>
-    </section>
-
-    <section class="row">
-      <div class="text wide">
-        <h3>Fuselage sizing &amp; CFD</h3>
-        <p>The hull was sized from conventional seaplane practice: bottom flaring to divert spray, a step to break water drag and let the aircraft rotate, and a tapered afterbody for high-incidence take-off. Drag the controls to see the buoyancy and lift budgets move; the marked point is the flown configuration.</p>
-      </div>
-      <figure class="view wide">
-        <div class="tool">
-          <div>
-            <h4>Hull parameters</h4>
-            <label><span><span>Beam B</span><output data-o="beam">260 mm</output></span><input type="range" name="beam" min="180" max="320" step="5" value="260"></label>
-            <label><span><span>Step depth</span><output data-o="step">7 % of B</output></span><input type="range" name="step" min="3" max="12" step="0.5" value="7"></label>
-            <label><span><span>Stern post angle α</span><output data-o="stern">7°</output></span><input type="range" name="stern" min="3" max="12" step="0.5" value="7"></label>
-            <dl class="readouts">
-              <div><dt>V IMMERSED</dt><dd data-o="vimm">0.0105 m³</dd></div>
-              <div><dt>BUOYANT FORCE</dt><dd data-o="buoy">10.47 kgf</dd></div>
-              <div><dt>DRAFT T</dt><dd data-o="draft">86 mm</dd></div>
-              <div><dt>SPRAY COEFF k</dt><dd data-o="spray">0.0675</dd></div>
-            </dl>
-            <p class="verdict" data-o="verdict" aria-live="polite">Weight ≤ buoyant force — floats</p>
-          </div>
-          <div>
-            <h4>Hull profile · side view</h4>
-            <svg viewBox="0 0 640 300" role="img" aria-label="Hull side profile at the chosen beam, step depth and stern post angle">
-              <path d="M0 196 H640" fill="none" stroke="var(--dusk)" stroke-width="1.5" opacity=".6" stroke-dasharray="6 6"/>
-              <path id="h-hatch" fill="none" stroke="var(--dusk)" stroke-width="1" opacity=".3"/>
-              <path id="h-hull" fill="var(--ink)" fill-opacity=".08" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round"/>
-              <path id="h-imm" fill="var(--dusk)" fill-opacity=".25" stroke="none"/>
-              <path id="h-step" fill="none" stroke="var(--sun)" stroke-width="2"/>
-              <path id="h-beam" fill="none" stroke="var(--sun)" stroke-width="1.2" opacity=".85"/>
-              <path id="h-stern" fill="none" stroke="var(--sun)" stroke-width="1.2" opacity=".85"/>
-              <g font-size="12">
-                <text id="h-step-t" class="mk" x="214" y="264">step <tspan data-o="stepMm">18</tspan> mm</text>
-                <text id="h-stern-t" class="mk" x="470" y="160">α <tspan data-o="sternN">7</tspan>°</text>
-                <text x="14" y="188">WL</text>
-                <text x="14" y="34">B = <tspan data-o="beamN">260</tspan> mm · L = 900 mm</text>
-              </g>
-            </svg>
-          </div>
-          <div>
-            <h4>Buoyancy vs beam</h4>
-            <p class="t-sub">Weight of UAV ≤ buoyant force</p>
-            <svg viewBox="0 0 520 260" role="img" aria-label="Buoyant force against hull beam, with the 10 kg maximum take-off weight line">
-              <path class="ch-axis" d="M56 20 V214 H500"/><path class="ch-axis" d="M56 214 H500 M56 195 H500 M56 147 H500 M56 100 H500 M56 52 H500" stroke-dasharray="3 7"/>
-              <path class="ch-limit" d="M56 147 H500"/>
-              <path id="c-buoy" class="ch-curve"/>
-              <circle id="c-buoy-dot" class="ch-dot" r="5.5" cx="-20" cy="-20"/>
-              <g font-size="11">
-                <text x="48" y="199" text-anchor="end">5</text><text x="48" y="151" text-anchor="end">10</text><text x="48" y="104" text-anchor="end">15</text><text x="48" y="56" text-anchor="end">20</text>
-                <text x="56" y="240">180</text><text x="500" y="240" text-anchor="end">320 mm</text>
-                <text class="lim" x="500" y="142" text-anchor="end">MTOW 10 kg</text>
-                <text x="64" y="34">kgf</text>
-              </g>
-            </svg>
-          </div>
-          <div>
-            <h4>Lift vs airspeed</h4>
-            <p class="t-sub">E421 · AR 8 · S 0.78 m² · incidence <span data-o="incN">2</span>°</p>
-            <svg viewBox="0 0 520 260" role="img" aria-label="Wing lift against airspeed, with the 98.1 N required lift line">
-              <path class="ch-axis" d="M56 20 V214 H500"/><path class="ch-axis" d="M56 214 H500 M56 160 H500 M56 106 H500 M56 52 H500" stroke-dasharray="3 7"/>
-              <path class="ch-limit" d="M56 148 H500"/>
-              <path id="c-lift" class="ch-curve"/>
-              <circle id="c-lift-dot" class="ch-dot" r="5.5" cx="-20" cy="-20"/>
-              <g font-size="11">
-                <text x="48" y="218" text-anchor="end">0</text><text x="48" y="164" text-anchor="end">80</text><text x="48" y="110" text-anchor="end">160</text><text x="48" y="56" text-anchor="end">240</text>
-                <text x="56" y="240">10</text><text x="500" y="240" text-anchor="end">22 m/s</text>
-                <text class="lim" x="500" y="143" text-anchor="end">Required 98.1 N</text>
-                <text x="26" y="34">N</text>
-              </g>
-            </svg>
-            <label><span><span>Airspeed</span><output data-o="vel">16 m/s</output></span><input type="range" name="vel" min="10" max="22" step="0.5" value="16"></label>
-            <label><span><span>Incidence</span><output data-o="inc">2°</output></span><input type="range" name="inc" min="0" max="4" step="0.5" value="2"></label>
-            <dl class="readouts"><div><dt>LIFT / CL</dt><dd data-o="lift">100.3 N · 0.82</dd></div></dl>
-            <p class="verdict" data-o="cfdNote" aria-live="polite">Lift exceeds the required 98.1 N — cruise trim is met at this incidence.</p>
-          </div>
+    <div class="p-body">
+  
+      <section class="row">
+        <div class="text">
+          <h3>Overview</h3>
+          <p>Designed an amphibious UAV to collect water samples from flowing rivers — a stepped planing hull sized from seaplane practice, carrying a sampling probe below the after body.</p>
         </div>
-        <figcaption>Interactive</figcaption>
-      </figure>
-    </section>
-
-    <section class="row">
-      <div class="text wide">
-        <h3>CFD results</h3>
-      </div>
-      <figure class="view wide">
-        <div class="cfd">
-          <figure><img src="deck/cfd-f1.png" alt="Pressure contour over the upper surface" loading="lazy"><figcaption>PRESSURE CONTOUR · UPPER SURFACE</figcaption></figure>
-          <figure><img src="deck/cfd-f3.png" alt="Pressure contour over the lower surface" loading="lazy"><figcaption>PRESSURE CONTOUR · LOWER SURFACE</figcaption></figure>
-          <figure><img src="deck/cfd-f2.png" alt="Velocity streamlines over the airframe" loading="lazy"><figcaption>VELOCITY STREAMLINE · UPPER SURFACE</figcaption></figure>
-          <figure><img src="deck/cfd-f4.png" alt="Velocity streamlines under the airframe" loading="lazy"><figcaption>VELOCITY STREAMLINE · LOWER SURFACE</figcaption></figure>
+        <figure class="view" data-view="Amphibious UAV Model.html" data-title="Interactive CAD model of the amphibious UAV">
+          <div class="slot"><div class="wait">Loading the 3D model</div></div>
+          <figcaption>3D CAD model · drag to rotate</figcaption>
+        </figure>
+      </section>
+  
+      <section class="row">
+        <div class="text">
+          <h3>Mission profile</h3>
+          <p>The same airframe flown through its sortie: transit to the reach, powered approach along the channel, touchdown on the step, hull-borne drift while the probe draws the sample, then a planing take-off run and climb-out.</p>
         </div>
-        <figcaption>ANSYS CFD results</figcaption>
-      </figure>
-    </section>
+        <figure class="view" data-view="Amphibious Mission.html" data-title="Animated water-sampling mission profile">
+          <div class="slot"><div class="wait">Loading the animation</div></div>
+          <figcaption>River water sampling</figcaption>
+        </figure>
+      </section>
+  
+      <section class="row">
+        <div class="text">
+          <h3>My role and highlights</h3>
+          <p>The airframe uses three materials, each placed where it works best. The surfaces that meet the water, the hull bottom and the floats, are shaped from foam and laminated with a composite layup. This gives them a smooth, watertight skin and a clean hydrodynamic profile, so the aircraft can land on water, sit steady and take off again. The wing and fuselage are built on a wooden primary structure, which keeps the airframe light, stiff and easy to repair in the field. The E421 high wing was assessed at low Reynolds number in XFLR. The tail surfaces use a composite sandwich construction for high stiffness at minimum weight, keeping the control surfaces precise in both air and spray.</p>
+        </div>
+        <figure class="view tall" data-view="Amphibious Structure 3D.html" data-title="Animated 3D model of the amphibious UAV primary structure from the CATIA STL">
+          <div class="slot"><div class="wait">Loading the 3D model</div></div>
+          <figcaption>Primary structure · ribs · spars · frames · skin</figcaption>
+        </figure>
+      </section>
+  
+      <section class="row">
+        <div class="text wide">
+          <h3>Fuselage sizing &amp; CFD</h3>
+          <p>The hull was sized from conventional seaplane practice: bottom flaring to divert spray, a step to break water drag and let the aircraft rotate, and a tapered afterbody for high-incidence take-off. Drag the controls to see the buoyancy and lift budgets move; the marked point is the flown configuration.</p>
+        </div>
+        <figure class="view wide">
+          <div class="tool">
+            <div>
+              <h4>Hull parameters</h4>
+              <label><span><span>Beam B</span><output data-o="beam">260 mm</output></span><input type="range" name="beam" min="180" max="320" step="5" value="260"></label>
+              <label><span><span>Step depth</span><output data-o="step">7 % of B</output></span><input type="range" name="step" min="3" max="12" step="0.5" value="7"></label>
+              <label><span><span>Stern post angle α</span><output data-o="stern">7°</output></span><input type="range" name="stern" min="3" max="12" step="0.5" value="7"></label>
+              <dl class="readouts">
+                <div><dt>V IMMERSED</dt><dd data-o="vimm">0.0105 m³</dd></div>
+                <div><dt>BUOYANT FORCE</dt><dd data-o="buoy">10.47 kgf</dd></div>
+                <div><dt>DRAFT T</dt><dd data-o="draft">86 mm</dd></div>
+                <div><dt>SPRAY COEFF k</dt><dd data-o="spray">0.0675</dd></div>
+              </dl>
+              <p class="verdict" data-o="verdict" aria-live="polite">Weight ≤ buoyant force — floats</p>
+            </div>
+            <div>
+              <h4>Hull profile · side view</h4>
+              <svg viewBox="0 0 640 300" role="img" aria-label="Hull side profile at the chosen beam, step depth and stern post angle">
+                <path d="M0 196 H640" fill="none" stroke="var(--dusk)" stroke-width="1.5" opacity=".6" stroke-dasharray="6 6"/>
+                <path id="h-hatch" fill="none" stroke="var(--dusk)" stroke-width="1" opacity=".3"/>
+                <path id="h-hull" fill="var(--ink)" fill-opacity=".08" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round"/>
+                <path id="h-imm" fill="var(--dusk)" fill-opacity=".25" stroke="none"/>
+                <path id="h-step" fill="none" stroke="var(--sun)" stroke-width="2"/>
+                <path id="h-beam" fill="none" stroke="var(--sun)" stroke-width="1.2" opacity=".85"/>
+                <path id="h-stern" fill="none" stroke="var(--sun)" stroke-width="1.2" opacity=".85"/>
+                <g font-size="12">
+                  <text id="h-step-t" class="mk" x="214" y="264">step <tspan data-o="stepMm">18</tspan> mm</text>
+                  <text id="h-stern-t" class="mk" x="470" y="160">α <tspan data-o="sternN">7</tspan>°</text>
+                  <text x="14" y="188">WL</text>
+                  <text x="14" y="34">B = <tspan data-o="beamN">260</tspan> mm · L = 900 mm</text>
+                </g>
+              </svg>
+            </div>
+            <div>
+              <h4>Buoyancy vs beam</h4>
+              <p class="t-sub">Weight of UAV ≤ buoyant force</p>
+              <svg viewBox="0 0 520 260" role="img" aria-label="Buoyant force against hull beam, with the 10 kg maximum take-off weight line">
+                <path class="ch-axis" d="M56 20 V214 H500"/><path class="ch-axis" d="M56 214 H500 M56 195 H500 M56 147 H500 M56 100 H500 M56 52 H500" stroke-dasharray="3 7"/>
+                <path class="ch-limit" d="M56 147 H500"/>
+                <path id="c-buoy" class="ch-curve"/>
+                <circle id="c-buoy-dot" class="ch-dot" r="5.5" cx="-20" cy="-20"/>
+                <g font-size="11">
+                  <text x="48" y="199" text-anchor="end">5</text><text x="48" y="151" text-anchor="end">10</text><text x="48" y="104" text-anchor="end">15</text><text x="48" y="56" text-anchor="end">20</text>
+                  <text x="56" y="240">180</text><text x="500" y="240" text-anchor="end">320 mm</text>
+                  <text class="lim" x="500" y="142" text-anchor="end">MTOW 10 kg</text>
+                  <text x="64" y="34">kgf</text>
+                </g>
+              </svg>
+            </div>
+            <div>
+              <h4>Lift vs airspeed</h4>
+              <p class="t-sub">E421 · AR 8 · S 0.78 m² · incidence <span data-o="incN">2</span>°</p>
+              <svg viewBox="0 0 520 260" role="img" aria-label="Wing lift against airspeed, with the 98.1 N required lift line">
+                <path class="ch-axis" d="M56 20 V214 H500"/><path class="ch-axis" d="M56 214 H500 M56 160 H500 M56 106 H500 M56 52 H500" stroke-dasharray="3 7"/>
+                <path class="ch-limit" d="M56 148 H500"/>
+                <path id="c-lift" class="ch-curve"/>
+                <circle id="c-lift-dot" class="ch-dot" r="5.5" cx="-20" cy="-20"/>
+                <g font-size="11">
+                  <text x="48" y="218" text-anchor="end">0</text><text x="48" y="164" text-anchor="end">80</text><text x="48" y="110" text-anchor="end">160</text><text x="48" y="56" text-anchor="end">240</text>
+                  <text x="56" y="240">10</text><text x="500" y="240" text-anchor="end">22 m/s</text>
+                  <text class="lim" x="500" y="143" text-anchor="end">Required 98.1 N</text>
+                  <text x="26" y="34">N</text>
+                </g>
+              </svg>
+              <label><span><span>Airspeed</span><output data-o="vel">16 m/s</output></span><input type="range" name="vel" min="10" max="22" step="0.5" value="16"></label>
+              <label><span><span>Incidence</span><output data-o="inc">2°</output></span><input type="range" name="inc" min="0" max="4" step="0.5" value="2"></label>
+              <dl class="readouts"><div><dt>LIFT / CL</dt><dd data-o="lift">100.3 N · 0.82</dd></div></dl>
+              <p class="verdict" data-o="cfdNote" aria-live="polite">Lift exceeds the required 98.1 N — cruise trim is met at this incidence.</p>
+            </div>
+          </div>
+          <figcaption>Interactive</figcaption>
+        </figure>
+      </section>
+  
+      <section class="row">
+        <div class="text wide">
+          <h3>CFD results</h3>
+        </div>
+        <figure class="view wide">
+          <div class="cfd">
+            <figure><img src="deck/cfd-f1.png" alt="Pressure contour over the upper surface" loading="lazy"><figcaption>PRESSURE CONTOUR · UPPER SURFACE</figcaption></figure>
+            <figure><img src="deck/cfd-f3.png" alt="Pressure contour over the lower surface" loading="lazy"><figcaption>PRESSURE CONTOUR · LOWER SURFACE</figcaption></figure>
+            <figure><img src="deck/cfd-f2.png" alt="Velocity streamlines over the airframe" loading="lazy"><figcaption>VELOCITY STREAMLINE · UPPER SURFACE</figcaption></figure>
+            <figure><img src="deck/cfd-f4.png" alt="Velocity streamlines under the airframe" loading="lazy"><figcaption>VELOCITY STREAMLINE · LOWER SURFACE</figcaption></figure>
+          </div>
+          <figcaption>ANSYS CFD results</figcaption>
+        </figure>
+      </section>
+    </div>
   </article>
 
   <!-- ===== 05 VTOL ===== -->
@@ -944,42 +989,44 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
       </div>
       <div class="p-facts">
         <dl class="specs">
-          <dt>Role</dt><dd>Surveillance</dd>
-          <dt>Structure</dt><dd>Wood + composite</dd>
-          <dt>Take-off</dt><dd>Vertical</dd>
+          <div><dt>Role</dt><dd>Surveillance</dd></div>
+          <div><dt>Structure</dt><dd>Wood + composite</dd></div>
+          <div><dt>Take-off</dt><dd>Vertical</dd></div>
         </dl>
         <blockquote class="quote"><p>“No runway. No compromise. Four motors to rise, one to fly, and one structure to carry them all.”</p></blockquote>
       </div>
     </header>
-
-    <section class="row solo">
-      <div class="text">
-        <h3>Overview</h3>
-        <p>A VTOL surveillance UAV prototype, developed at the Indian Institute of Science (IISc), Bengaluru. It takes off and lands vertically, with no runway, then transitions to efficient fixed-wing cruise for longer surveillance coverage. I took the design from concept to flight. It's built on a lightweight wooden primary structure with composite hand lay-up, sized for the hover-to-cruise transition.</p>
-      </div>
-    </section>
-
-    <section class="row">
-      <div class="text">
-        <h3>Mission profile</h3>
-      </div>
-      <figure class="view" data-view="VTOL Internal Structure.html?v=mission" data-title="Animated VTOL mission profile: vertical take-off, transition, cruise and loiter, transition, vertical landing">
-        <div class="slot"><div class="wait">Loading the animation</div></div>
-        <figcaption>Take-off to landing</figcaption>
-      </figure>
-    </section>
-
-    <section class="row">
-      <div class="text">
-        <h3>Internal structure</h3>
-        <p>The VTOL is a hybrid quadplane. Four lift motors handle vertical takeoff and landing, and a pusher motor drives fixed-wing cruise. The airframe was designed as a lightweight skeleton that carries both sets of loads. The 2.5 m tapered high wing uses a rib-and-spar construction: evenly spaced ribs are threaded onto tubular spars, keeping it light while holding the Rhode 36 aerofoil profile. Two tubular booms run through the wing, parallel to the fuselage. Each boom carries two lift motor mounts, one ahead of the wing and one behind it, and the booms join at the rear to support the inverted V-tail. The fuselage is built from birch ribs under a monocoque skin. It houses the payload, autopilot and batteries, and provides the mount for the pusher motor.</p>
-        <p>The complete airframe weighs 3.35 kg out of an 8 kg maximum takeoff weight (fuselage 0.85 kg, wing 1.0 kg, tail and booms 1.5 kg). The structure was checked in a static structural FEA with a factor of safety of about 1.5, and von Mises stress and deflection were reviewed across the wing, booms and tail.</p>
-      </div>
-      <figure class="view tall" data-view="VTOL Internal Structure.html" data-title="Animated 3D model of the VTOL UAV assembling its internal structure, then skinning">
-        <div class="slot"><div class="wait">Loading the 3D model</div></div>
-        <figcaption>Wooden frame · composite skin</figcaption>
-      </figure>
-    </section>
+    <div class="p-body">
+  
+      <section class="row solo">
+        <div class="text">
+          <h3>Overview</h3>
+          <p>A VTOL surveillance UAV prototype, developed at the Indian Institute of Science (IISc), Bengaluru. It takes off and lands vertically, with no runway, then transitions to efficient fixed-wing cruise for longer surveillance coverage. I took the design from concept to flight. It's built on a lightweight wooden primary structure with composite hand lay-up, sized for the hover-to-cruise transition.</p>
+        </div>
+      </section>
+  
+      <section class="row">
+        <div class="text">
+          <h3>Mission profile</h3>
+        </div>
+        <figure class="view" data-view="VTOL Internal Structure.html?v=mission" data-title="Animated VTOL mission profile: vertical take-off, transition, cruise and loiter, transition, vertical landing">
+          <div class="slot"><div class="wait">Loading the animation</div></div>
+          <figcaption>Take-off to landing</figcaption>
+        </figure>
+      </section>
+  
+      <section class="row">
+        <div class="text">
+          <h3>Internal structure</h3>
+          <p>The VTOL is a hybrid quadplane. Four lift motors handle vertical takeoff and landing, and a pusher motor drives fixed-wing cruise. The airframe was designed as a lightweight skeleton that carries both sets of loads. The 2.5 m tapered high wing uses a rib-and-spar construction: evenly spaced ribs are threaded onto tubular spars, keeping it light while holding the Rhode 36 aerofoil profile. Two tubular booms run through the wing, parallel to the fuselage. Each boom carries two lift motor mounts, one ahead of the wing and one behind it, and the booms join at the rear to support the inverted V-tail. The fuselage is built from birch ribs under a monocoque skin. It houses the payload, autopilot and batteries, and provides the mount for the pusher motor.</p>
+          <p>The complete airframe weighs 3.35 kg out of an 8 kg maximum takeoff weight (fuselage 0.85 kg, wing 1.0 kg, tail and booms 1.5 kg). The structure was checked in a static structural FEA with a factor of safety of about 1.5, and von Mises stress and deflection were reviewed across the wing, booms and tail.</p>
+        </div>
+        <figure class="view tall" data-view="VTOL Internal Structure.html" data-title="Animated 3D model of the VTOL UAV assembling its internal structure, then skinning">
+          <div class="slot"><div class="wait">Loading the 3D model</div></div>
+          <figcaption>Wooden frame · composite skin</figcaption>
+        </figure>
+      </section>
+    </div>
   </article>
 
   </div>
@@ -1078,13 +1125,13 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
           <span class="pno">P01</span>
           <b>Design, analysis and application of the wound truss concept for UAV</b>
           <p>Markedly better strength-to-weight ratio from filament-wound truss structure.</p>
-          <p>Proceedings of IRAJ International Conference · Bengaluru · March 2019 · <a href="https://www.digitalxplore.org/up_proc/pdf/418-155427137658-64.pdf">Read paper ↗</a></p>
+          <p>Proceedings of IRAJ International Conference · Bengaluru · March 2019 · <a href="https://www.digitalxplore.org/up_proc/pdf/418-155427137658-64.pdf">Read paper <span class="arr">↗</span></a></p>
         </li>
         <li>
           <span class="pno">P02</span>
           <b>Study on fatigue life estimation of airframe fuselage window cutout panels</b>
           <p>Residual skin strength decreases with crack propagation across the cutout panel.</p>
-          <p>IJRASET · Paper ID IJRASET17537 · <a href="https://www.ijraset.com/fileserve.php?FID=17537">Read paper ↗</a></p>
+          <p>IJRASET · Paper ID IJRASET17537 · <a href="https://www.ijraset.com/fileserve.php?FID=17537">Read paper <span class="arr">↗</span></a></p>
         </li>
       </ul>
     </div>
@@ -1117,46 +1164,21 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
 </div>
 </main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
 <script>
 (() => {
-  const bar = document.querySelector('.bar');
-  const day = document.querySelector('.daylight');
+  const root = document.documentElement;
+  const hasGsap = !!(window.gsap && window.ScrollTrigger);
+  // Without GSAP nothing would reveal the hero, so show it as is.
+  if (!hasGsap) root.classList.remove('anim');
 
-  // A marker under the nav link for the section crossing the middle of the screen.
-  const wrap = bar.querySelector('.wrap');
-  const links = [...bar.querySelectorAll('nav a')];
-  const targets = links.map(l => [l, document.querySelector(l.hash)]).filter(t => t[1]);
-  const mark = document.createElement('span');
-  mark.className = 'mark';
-  mark.setAttribute('aria-hidden', 'true');
-  wrap.append(mark);
-  let current = null;
-  const place = () => {
-    links.forEach(l => l === current ? l.setAttribute('aria-current', 'location') : l.removeAttribute('aria-current'));
-    if (!current || !current.offsetWidth) { mark.classList.remove('on'); return; }
-    const r = current.getBoundingClientRect();
-    if (!mark.classList.contains('on')) { mark.style.transition = 'none'; requestAnimationFrame(() => mark.style.transition = ''); }
-    mark.style.setProperty('--x', (r.left - wrap.getBoundingClientRect().left) + 'px');
-    mark.style.setProperty('--w', r.width);
-    mark.classList.add('on');
-  };
-
-  // On scroll: turn the bar dark once the hero's bottom edge has passed under it, and move the marker.
-  let ticking = false;
-  const tone = () => {
-    ticking = false;
-    bar.classList.toggle('night', day.getBoundingClientRect().bottom < bar.offsetHeight);
-    const mid = innerHeight / 2;
-    const hit = targets.find(t => { const r = t[1].getBoundingClientRect(); return r.top <= mid && r.bottom > mid; });
-    const next = hit ? hit[0] : null;
-    if (next !== current) { current = next; place(); }
-  };
-  addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(tone); } }, { passive: true });
-  addEventListener('resize', () => { tone(); place(); });
-  tone();
+  // Keep pointer and wheel input inside the 3D viewers and the hull tool away from smooth scroll.
+  document.querySelectorAll('.view, .tool').forEach(el => el.setAttribute('data-lenis-prevent', ''));
 
   // Count the title-block figures up while the drawing plots.
-  if (document.documentElement.classList.contains('motion')) {
+  if (root.classList.contains('motion')) {
     document.querySelectorAll('[data-count]').forEach(n => {
       const to = parseFloat(n.dataset.count) || 0;
       n.textContent = '0';
@@ -1264,11 +1286,100 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
     render();
   }
 
-  // Draw each project's header rule as the sheet comes into view.
-  const rules = new IntersectionObserver(es => es.forEach(e => {
-    if (e.isIntersecting) { e.target.classList.add('drawn'); rules.unobserve(e.target); }
-  }), { threshold: .6 });
-  document.querySelectorAll('.project > header').forEach(h => rules.observe(h));
+  // Capabilities: a spotlight on each pill that follows the cursor.
+  const caps = document.querySelector('.caps');
+  if (caps && matchMedia('(pointer: fine)').matches) {
+    const pills = [...caps.children];
+    let px = 0, py = 0, queued = false;
+    const paint = () => {
+      queued = false;
+      pills.forEach(p => { const r = p.getBoundingClientRect(); p.style.setProperty('--mouse-x', (px - r.left) + 'px'); p.style.setProperty('--mouse-y', (py - r.top) + 'px'); });
+    };
+    caps.addEventListener('pointermove', e => { px = e.clientX; py = e.clientY; if (!queued) { queued = true; requestAnimationFrame(paint); } });
+    caps.addEventListener('pointerleave', () => pills.forEach(p => { p.style.removeProperty('--mouse-x'); p.style.removeProperty('--mouse-y'); }));
+  }
+
+  // Nav: mark the link for the section crossing the middle of the screen.
+  const links = [...document.querySelectorAll('.bar nav a')];
+  const setActive = (a) => links.forEach(l => l === a ? l.setAttribute('aria-current', 'location') : l.removeAttribute('aria-current'));
+
+  if (hasGsap) {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const progress = document.createElement('div');
+    progress.className = 'progress';
+    progress.setAttribute('aria-hidden', 'true');
+    document.body.prepend(progress);
+    gsap.to(progress, { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: .3 } });
+
+    links.forEach(a => {
+      const el = document.querySelector(a.hash);
+      if (!el) return;
+      ScrollTrigger.create({
+        trigger: el, start: 'top center', end: 'bottom center',
+        onToggle: self => { if (self.isActive) setActive(a); else if (a.hasAttribute('aria-current')) setActive(null); }
+      });
+    });
+
+    const mm = gsap.matchMedia();
+    mm.add('(prefers-reduced-motion: no-preference)', () => {
+      // Smooth scroll, driven by the GSAP ticker so ScrollTrigger stays in step.
+      let lenis = null, stopLenis = null;
+      if (window.Lenis) {
+        lenis = new Lenis({ lerp: .09, smoothWheel: true, prevent: node => !!(node.closest && node.closest('[data-lenis-prevent]')) });
+        lenis.on('scroll', ScrollTrigger.update);
+        const tick = t => lenis.raf(t * 1000);
+        gsap.ticker.add(tick);
+        gsap.ticker.lagSmoothing(0);
+        const jump = e => {
+          const a = e.currentTarget, el = a.hash && document.querySelector(a.hash);
+          if (!el) return;
+          e.preventDefault();
+          lenis.scrollTo(el, { offset: -96 });
+          history.replaceState(null, '', a.hash);
+        };
+        const anchors = [...document.querySelectorAll('a[href^="#"]')];
+        anchors.forEach(a => a.addEventListener('click', jump));
+        stopLenis = () => { anchors.forEach(a => a.removeEventListener('click', jump)); gsap.ticker.remove(tick); lenis.destroy(); };
+      }
+
+      // Hero: the title block rises in, and its hairlines draw across.
+      const block = document.querySelector('.hero .block');
+      const cells = [...block.children];
+      const rows = [block.querySelector('.name'), block.querySelector('.role')];
+      for (let c = block.querySelector('.role').nextElementSibling; c && c.classList.contains('k'); c = c.nextElementSibling.nextElementSibling) rows.push([c, c.nextElementSibling]);
+      rows.push(block.querySelector('.actions'));
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out', duration: .8 }, delay: .2 });
+      rows.forEach((r, i) => tl.fromTo(r, { y: 28, opacity: 0, clipPath: 'inset(0 0 100% 0)' }, { y: 0, opacity: 1, clipPath: 'inset(0 0 0% 0)', clearProps: 'transform,clipPath' }, i * .08));
+      tl.fromTo(cells, { '--hair': 0 }, { '--hair': 1, duration: .9, ease: 'power2.inOut', stagger: .06 }, .3);
+
+      // Buttons lean toward the pointer.
+      const magnets = matchMedia('(pointer: fine)').matches ? [...document.querySelectorAll('.btn')] : [];
+      const pull = e => { const b = e.currentTarget, r = b.getBoundingClientRect(); b.style.setProperty('--mx', ((e.clientX - r.left - r.width / 2) * .22).toFixed(1) + 'px'); b.style.setProperty('--my', ((e.clientY - r.top - r.height / 2) * .32).toFixed(1) + 'px'); };
+      const release = e => { e.currentTarget.style.setProperty('--mx', '0px'); e.currentTarget.style.setProperty('--my', '0px'); };
+      magnets.forEach(b => { b.addEventListener('pointermove', pull); b.addEventListener('pointerleave', release); });
+
+      // Philosophy: each statement brightens as it scrolls into place.
+      ['#intro-h', '.intro .copy p', '.motto'].forEach(sel => document.querySelectorAll(sel).forEach(el => {
+        gsap.fromTo(el, { opacity: .15, y: 20 }, { opacity: 1, y: 0, ease: 'none', scrollTrigger: { trigger: el, start: 'top 88%', end: 'top 52%', scrub: true } });
+      }));
+
+      // Experience rows slide in one after another.
+      gsap.from('.revs tbody tr', { x: -24, opacity: 0, duration: .7, ease: 'power3.out', stagger: .1, clearProps: 'transform,opacity', scrollTrigger: { trigger: '.revs', start: 'top 80%' } });
+
+      // Research papers and education entries rise in.
+      gsap.from('.papers li', { y: 24, opacity: 0, duration: .7, ease: 'power3.out', stagger: .1, clearProps: 'transform,opacity', scrollTrigger: { trigger: '.papers', start: 'top 82%' } });
+      gsap.from('.edu dt, .edu dd', { y: 24, opacity: 0, duration: .7, ease: 'power3.out', stagger: .05, clearProps: 'transform,opacity', scrollTrigger: { trigger: '.edu', start: 'top 82%' } });
+
+      // The closing question scales up into place.
+      gsap.from('.contact', { scale: .97, opacity: 0, duration: 1, ease: 'power3.out', clearProps: 'transform,opacity', scrollTrigger: { trigger: '.contact', start: 'top 85%' } });
+
+      return () => {
+        if (lenis) stopLenis();
+        magnets.forEach(b => { b.removeEventListener('pointermove', pull); b.removeEventListener('pointerleave', release); b.style.removeProperty('--mx'); b.style.removeProperty('--my'); });
+      };
+    });
+  }
 
   // Load each viewer as it approaches, and unload it once it is far away,
   // so only a handful of WebGL contexts are alive at any time.
