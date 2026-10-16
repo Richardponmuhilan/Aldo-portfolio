@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html><head>
+<script src="viewer-perf.js"></script><meta charset="utf-8"><title>Folding propeller deploy</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>html,body{margin:0;height:100%;background:#0d0f11;overflow:hidden}canvas{display:block;width:100%;height:100%}</style>
+</head><body><canvas id="c"></canvas>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+const W=640,H=380,ACC=(window.ACCENT||'#f08a3c');
+function fit(){const r=cv.getBoundingClientRect(),d=devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;}
+addEventListener('resize',fit);fit();
+const T=9,YAW=0.42,cy=Math.cos(YAW),sy=Math.sin(YAW);
+const HX=372,HY=196,L=138,HR=11,FOLD=1.44,WMAX=15;
+const ease=t=>t<0?0:t>1?1:t*t*(3-2*t);
+function state(t){
+  let w;
+  if(t<1.4)w=0;else if(t<3.2)w=ease((t-1.4)/1.8);else if(t<6.2)w=1;else if(t<7.6)w=1-ease((t-6.2)/1.4);else w=0;
+  const open=ease(Math.min(1,w/0.55));
+  const f=FOLD*(1-open);
+  let ph=t<1.4?'Stowed · blades folded aft':t<3.2?'Motor spin-up · centrifugal deploy':t<6.2?'Cruise · blades fully open':t<7.6?'Motor off · airflow folds blades':'Stowed · blades folded aft';
+  return{w,f,ph};
+}
+function P(ax,ry,rz){return[HX+ax*cy+rz*sy,HY-ry];}
+let phi=0,last=performance.now(),t0=last;
+function blade(ph,f,alpha,front){
+  const hx=4,hy=HR*Math.cos(ph),hz=HR*Math.sin(ph);
+  const d=[Math.sin(f),Math.cos(f)*Math.cos(ph),Math.cos(f)*Math.sin(ph)];
+  const tg=[0,-Math.sin(ph),Math.cos(ph)];
+  const pt=(s,c)=>P(hx+d[0]*s*L+tg[0]*c,hy+d[1]*s*L+tg[1]*c,hz+d[2]*s*L+tg[2]*c);
+  const chord=s=>(s<.15?9+s*40:15-(s-.15)*14);
+  const up=[],dn=[];
+  for(let i=0;i<=14;i++){const s=i/14,c=chord(s);up.push(pt(s,c*.35));dn.push(pt(s,-c*.65));}
+  ctx.globalAlpha=alpha;
+  ctx.beginPath();ctx.moveTo(up[0][0],up[0][1]);up.forEach(p=>ctx.lineTo(p[0],p[1]));
+  for(let i=dn.length-1;i>=0;i--)ctx.lineTo(dn[i][0],dn[i][1]);ctx.closePath();
+  const shade=Math.sin(ph);ctx.fillStyle=front?'#1d2024':'#141619';ctx.fill();
+  ctx.strokeStyle=`rgba(255,255,255,${.12+.12*Math.max(0,shade)})`;ctx.lineWidth=1;
+  ctx.beginPath();up.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();
+  const h=P(hx,hy,hz);ctx.fillStyle='#8a8f96';ctx.beginPath();ctx.arc(h[0],h[1],2.2,0,7);ctx.fill();
+  ctx.globalAlpha=1;
+}
+function fuselage(){
+  // tail fins (behind)
+  ctx.fillStyle='#22262b';
+  ctx.beginPath();ctx.moveTo(150,HY-26);ctx.lineTo(215,HY-86);ctx.lineTo(262,HY-86);ctx.lineTo(262,HY-24);ctx.closePath();ctx.fill();
+  const g=ctx.createLinearGradient(0,HY-42,0,HY+42);
+  g.addColorStop(0,'#4a5058');g.addColorStop(.35,'#353a40');g.addColorStop(1,'#1a1d21');
+  ctx.fillStyle=g;ctx.beginPath();
+  ctx.moveTo(-10,HY-40);ctx.lineTo(210,HY-40);ctx.quadraticCurveTo(300,HY-36,322,HY-19);
+  ctx.lineTo(322,HY+19);ctx.quadraticCurveTo(300,HY+36,210,HY+40);ctx.lineTo(-10,HY+40);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.08)';ctx.beginPath();ctx.moveTo(120,HY-40);ctx.lineTo(120,HY+40);ctx.moveTo(40,HY-40);ctx.lineTo(40,HY+40);ctx.stroke();
+  ctx.fillStyle='#2a2e34';
+  ctx.beginPath();ctx.moveTo(150,HY+26);ctx.lineTo(215,HY+86);ctx.lineTo(262,HY+86);ctx.lineTo(262,HY+24);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.1)';ctx.stroke();
+  // motor bell
+  const m=ctx.createLinearGradient(0,HY-18,0,HY+18);m.addColorStop(0,'#d8454a');m.addColorStop(.4,'#a8252b');m.addColorStop(1,'#5a1216');
+  ctx.fillStyle='#111';ctx.fillRect(322,HY-14,6,28);
+  ctx.fillStyle=m;ctx.beginPath();ctx.roundRect(328,HY-18,34,36,3);ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.35)';for(let i=0;i<4;i++)ctx.fillRect(334+i*7,HY-18,2,36);
+}
+function spinner(){
+  const [bx,by]=P(0,0,0);
+  const g=ctx.createLinearGradient(0,HY-14,0,HY+14);g.addColorStop(0,'#3a3e44');g.addColorStop(.4,'#1b1d20');g.addColorStop(1,'#08090a');
+  ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(bx-8,HY-15);ctx.lineTo(bx+2,HY-15);
+  ctx.bezierCurveTo(bx+30,HY-14,bx+46,HY-4,bx+50,HY);ctx.bezierCurveTo(bx+46,HY+4,bx+30,HY+14,bx+2,HY+15);ctx.lineTo(bx-8,HY+15);ctx.closePath();ctx.fill();
+}
+function frame(now){
+  const dpr=devicePixelRatio||1;if(cv.width!==Math.round(cv.clientWidth*dpr)||cv.height!==Math.round(cv.clientHeight*dpr)){cv.width=Math.round(cv.clientWidth*dpr);cv.height=Math.round(cv.clientHeight*dpr);}
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  const t=((now-t0)/1000)%T,s=state(t);
+  phi+=s.w*WMAX*dt;
+  const W2=cv.width/W,H2=cv.height/H,k=Math.min(W2,H2);
+  ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#0d0f11';ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.setTransform(k,0,0,k,(cv.width-W*k)/2,(cv.height-H*k)/2);
+  // airflow lines
+  ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;
+  for(let i=0;i<7;i++){const y=40+i*50,off=((now/1000)*(60+s.w*260)+i*37)%120;ctx.setLineDash([30,90]);ctx.lineDashOffset=-off;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.setLineDash([]);
+  fuselage();
+  const blur=Math.max(0,(s.w-.45)/.55);
+  const blades=[phi,phi+Math.PI].map(p=>({p,z:Math.sin(p)}));
+  blades.sort((a,b)=>a.z-b.z);
+  blade(blades[0].p,s.f,1-blur*.75,false);
+  if(blur>0){
+    const r=L*Math.cos(s.f)+HR;const c=P(4,0,0);
+    ctx.save();ctx.translate(c[0],c[1]);ctx.scale(sy,1);
+    const g=ctx.createRadialGradient(0,0,HR,0,0,r);g.addColorStop(0,`rgba(40,44,50,${.55*blur})`);g.addColorStop(.85,`rgba(60,64,70,${.35*blur})`);g.addColorStop(1,'rgba(60,64,70,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,r,0,7);ctx.fill();
+    ctx.strokeStyle=`rgba(240,138,60,${.35*blur})`;ctx.beginPath();ctx.arc(0,0,r-3,0,7);ctx.stroke();ctx.restore();
+  }
+  spinner();
+  blade(blades[1].p,s.f,1-blur*.75,true);
+  // labels
+  ctx.font='500 11px "IBM Plex Mono",monospace';ctx.fillStyle=ACC;ctx.textBaseline='top';
+  ctx.fillText('PUSHER · FOLDING PROP',24,22);
+  ctx.fillStyle='#c3c7cd';ctx.font='400 12px "IBM Plex Mono",monospace';ctx.fillText(s.ph,24,40);
+  ctx.fillStyle='#93979e';ctx.font='400 11px "IBM Plex Mono",monospace';
+  ctx.fillText('RPM  '+String(Math.round(s.w*9800)).padStart(5,' '),24,H-54);
+  ctx.fillText('FOLD '+String(Math.round(s.f*180/Math.PI)).padStart(4,' ')+'°',24,H-36);
+  ctx.textAlign='right';ctx.fillText('FWD ←   → AFT',W-24,H-36);ctx.textAlign='left';
+  // progress
+  ctx.fillStyle='rgba(255,255,255,.08)';ctx.fillRect(0,H-3,W,3);ctx.fillStyle=ACC;ctx.fillRect(0,H-3,W*t/T,3);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script></body></html>

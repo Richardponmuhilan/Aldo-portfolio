@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html><head>
+<script src="viewer-perf.js"></script><meta charset="utf-8"><title>EO/IR nose gimbal</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>html,body{margin:0;height:100%;background:#0d0f11;overflow:hidden}canvas{display:block;width:100%;height:100%}</style>
+</head><body><canvas id="c"></canvas>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+const W=640,H=380,ACC=(window.ACCENT||'#f08a3c'),T=10;
+const NX=196,NY=150,R=34; // nose dome centre
+const ease=t=>t<0?0:t>1?1:t*t*(3-2*t);
+function state(t){
+  // tilt (deg below horizon) & pan (-1..1 visual) & mode
+  let tilt,pan,ph,laser=0,ir=false;
+  if(t<2){tilt=20+25*ease(t/2);pan=Math.sin(t*1.6)*.6;ph='Search · EO day channel';}
+  else if(t<4){tilt=45;pan=.6*Math.sin(3.2)*(1-ease((t-2)/2));ph='Detect · recognise';}
+  else if(t<7){tilt=45+8*ease((t-4)/3);pan=0;ph='Track · laser pointer on target';laser=1;}
+  else{tilt=53-33*ease((t-7)/3);pan=Math.sin((t-7)*1.6)*.6*ease((t-7)/1.5);ph='IR thermal channel · re-scan';ir=true;}
+  if(t>=5.5&&t<7)ir=true;
+  return{tilt,pan,ph,laser,ir};
+}
+function body(){
+  const g=ctx.createLinearGradient(0,NY-R,0,NY+R);
+  g.addColorStop(0,'#b7bbbf');g.addColorStop(.35,'#8e9398');g.addColorStop(1,'#4a4e53');
+  ctx.fillStyle=g;ctx.beginPath();
+  ctx.moveTo(NX,NY-R);ctx.lineTo(430,NY-R+2);ctx.lineTo(430,NY+R-2);ctx.lineTo(NX,NY+R);ctx.closePath();ctx.fill();
+  const f=ctx.createLinearGradient(330,0,432,0);f.addColorStop(0,'rgba(13,15,17,0)');f.addColorStop(1,'#0d0f11');ctx.fillStyle=f;ctx.fillRect(330,NY-R-1,104,R*2+2);
+  ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=1;
+  [262].forEach(x=>{ctx.beginPath();ctx.moveTo(x,NY-R+1);ctx.lineTo(x,NY+R-1);ctx.stroke();});
+  // collar
+  ctx.fillStyle='#6b7075';ctx.beginPath();ctx.ellipse(NX,NY,10,R,0,0,7);ctx.fill();
+}
+function dome(s,now){
+  // gimbal ball
+  const a=s.tilt*Math.PI/180;
+  ctx.save();ctx.beginPath();ctx.arc(NX,NY,R-2,Math.PI/2,Math.PI*1.5);ctx.closePath();ctx.clip();
+  ctx.fillStyle='#16181b';ctx.fillRect(NX-R,NY-R,R*2,R*2);
+  const bx=NX-10*Math.cos(a)+s.pan*3,by=NY+10*Math.sin(a);
+  const bg=ctx.createRadialGradient(bx-8,by-8,2,bx,by,26);bg.addColorStop(0,'#3a3f45');bg.addColorStop(1,'#0b0c0e');
+  ctx.fillStyle=bg;ctx.beginPath();ctx.arc(NX-4,NY,26,0,7);ctx.fill();
+  const lens=(dx,dy,r,col)=>{ctx.fillStyle='#050607';ctx.beginPath();ctx.arc(bx+dx,by+dy,r,0,7);ctx.fill();ctx.fillStyle=col;ctx.beginPath();ctx.arc(bx+dx-1,by+dy-1,r*.45,0,7);ctx.fill();};
+  lens(-6,-6,7.5,s.ir?'#7a6a55':'#2f5a7a');
+  lens(-6,8,5.5,s.ir?'#c05a2a':'#5a3a3a');
+  lens(4,2,2.5,s.laser&&Math.sin(now/90)>0?'#ff4030':'#402020');
+  ctx.restore();
+  // glass
+  ctx.fillStyle='rgba(180,210,230,.10)';ctx.strokeStyle='rgba(220,235,245,.45)';ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.arc(NX,NY,R,Math.PI/2,Math.PI*1.5);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(NX,NY,R-5,Math.PI*1.1,Math.PI*1.35);ctx.stroke();
+}
+function cone(s,now){
+  const a=s.tilt*Math.PI/180,half=(s.ir?7:10)*Math.PI/180;
+  const ox=NX-18,oy=NY+4,len=300;
+  const p=ang=>[ox-Math.cos(ang)*len,oy+Math.sin(ang)*len];
+  const p1=p(a-half),p2=p(a+half);
+  const g=ctx.createLinearGradient(ox,oy,(p1[0]+p2[0])/2,(p1[1]+p2[1])/2);
+  g.addColorStop(0,'rgba(240,138,60,.32)');g.addColorStop(1,'rgba(240,138,60,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(240,138,60,.45)';ctx.lineWidth=1;ctx.setLineDash([4,5]);
+  ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(p1[0],p1[1]);ctx.moveTo(ox,oy);ctx.lineTo(p2[0],p2[1]);ctx.stroke();ctx.setLineDash([]);
+  if(s.laser){const q=p(a);ctx.strokeStyle=`rgba(255,70,50,${.5+.4*Math.sin(now/90)})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(q[0],q[1]);ctx.stroke();}
+}
+function inset(s,now){
+  const x=W-196,y=H-132,w=172,h=108;
+  ctx.fillStyle=s.ir?'#1a1a1a':'#1b2622';ctx.fillRect(x,y,w,h);
+  ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();
+  const drift=(now/40)%24;
+  ctx.strokeStyle=s.ir?'rgba(255,255,255,.07)':'rgba(160,200,170,.10)';
+  for(let i=-1;i<9;i++){ctx.beginPath();ctx.moveTo(x+i*24+drift,y);ctx.lineTo(x+i*24+drift-30,y+h);ctx.stroke();}
+  const tx=x+w/2+(s.laser?0:Math.sin(now/600)*28),ty=y+h/2+(s.laser?0:Math.cos(now/800)*14);
+  ctx.fillStyle=s.ir?'#f4f2ee':'#3e4a40';ctx.fillRect(tx-9,ty-5,18,10);
+  if(s.ir){ctx.fillStyle='rgba(255,255,255,.25)';ctx.beginPath();ctx.arc(tx,ty,14,0,7);ctx.fill();}
+  ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,.18)';ctx.strokeRect(x+.5,y+.5,w-1,h-1);
+  const cx=x+w/2,cy=y+h/2;ctx.strokeStyle=s.laser?ACC:'rgba(255,255,255,.6)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(cx-18,cy);ctx.lineTo(cx-6,cy);ctx.moveTo(cx+6,cy);ctx.lineTo(cx+18,cy);ctx.moveTo(cx,cy-14);ctx.lineTo(cx,cy-5);ctx.moveTo(cx,cy+5);ctx.lineTo(cx,cy+14);ctx.stroke();
+  if(s.laser){ctx.strokeRect(cx-14,cy-10,28,20);}
+  ctx.font='500 10px "IBM Plex Mono",monospace';ctx.fillStyle=s.ir?'#f4f2ee':'#c3c7cd';ctx.textBaseline='top';
+  ctx.fillText(s.ir?'IR · WHITE-HOT':'EO · DAY',x+6,y+5);
+  ctx.textAlign='right';ctx.fillText(s.laser?'LOCK':'SCAN',x+w-6,y+5);ctx.textAlign='left';
+}
+let t0=performance.now();
+function frame(now){
+  const dpr=devicePixelRatio||1;if(cv.width!==Math.round(cv.clientWidth*dpr)||cv.height!==Math.round(cv.clientHeight*dpr)){cv.width=Math.round(cv.clientWidth*dpr);cv.height=Math.round(cv.clientHeight*dpr);}
+  const t=((now-t0)/1000)%T,s=state(t);
+  const k=Math.min(cv.width/W,cv.height/H);
+  ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#0d0f11';ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.setTransform(k,0,0,k,(cv.width-W*k)/2,(cv.height-H*k)/2);
+  ctx.strokeStyle='rgba(255,255,255,.08)';ctx.beginPath();ctx.moveTo(0,H-18);ctx.lineTo(W,H-18);ctx.stroke();
+  cone(s,now);body();dome(s,now);
+  // callout
+  ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(NX-8,NY-R+4);ctx.lineTo(NX-30,NY-78);ctx.lineTo(NX-110,NY-78);ctx.stroke();
+  ctx.font='500 10px "IBM Plex Mono",monospace';ctx.fillStyle='#c3c7cd';ctx.textBaseline='bottom';ctx.fillText('NOSE GIMBAL · EO + IR + LASER',NX-176,NY-82);
+  ctx.textBaseline='top';ctx.font='500 11px "IBM Plex Mono",monospace';ctx.fillStyle=ACC;ctx.fillText('EO/IR PAYLOAD',24,22);
+  ctx.fillStyle='#c3c7cd';ctx.font='400 12px "IBM Plex Mono",monospace';ctx.fillText(s.ph,24,40);
+  ctx.fillStyle='#93979e';ctx.font='400 11px "IBM Plex Mono",monospace';
+  ctx.fillText('TILT '+String(-Math.round(s.tilt)).padStart(4,' ')+'°   PAN '+String(Math.round(s.pan*60)).padStart(4,' ')+'°',24,H-44);
+  ctx.fillStyle='rgba(255,255,255,.08)';ctx.fillRect(0,H-3,W,3);ctx.fillStyle=ACC;ctx.fillRect(0,H-3,W*t/T,3);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script></body></html>

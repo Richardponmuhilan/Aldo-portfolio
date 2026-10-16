@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="viewer-perf.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amphibious UAV — 3D model</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9"
+  }
+}
+</script>
+<style>
+  html,body{height:100%;margin:0;background:linear-gradient(#34335f 0%,#3e3d6c 58%,#8d8cab 100%);overflow:hidden}
+  #view{position:absolute;inset:0}
+  #view canvas{display:block;width:100%;height:100%;touch-action:none}
+  #hint{position:absolute;left:16px;bottom:14px;font:11px/1 'IBM Plex Mono',ui-monospace,monospace;
+        letter-spacing:.18em;text-transform:uppercase;color:#1e1d3c;pointer-events:none;user-select:none}
+</style>
+</head>
+<body>
+<div id="view"></div>
+<p id="hint">Drag to rotate · scroll to zoom</p>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { buildAmphibiousUAV } from './amph-model.js';
+
+const host = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+host.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(32, 1, 0.05, 60);
+
+const model = buildAmphibiousUAV();
+const box = new THREE.Box3().setFromObject(model);
+const centre = box.getCenter(new THREE.Vector3());
+model.position.sub(centre);
+scene.add(model);
+const radius = box.getSize(new THREE.Vector3()).length() * 0.5;
+
+// lighting: cool key, warm rim, soft ambient
+scene.add(new THREE.HemisphereLight(0xcfe0f0, 0x27313a, 1.15));
+const key = new THREE.DirectionalLight(0xffffff, 2.1);
+key.position.set(2.2, 3.0, 1.8);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.bias = -0.0009;
+const d = radius * 1.3;
+Object.assign(key.shadow.camera, { left: -d, right: d, top: d, bottom: -d, near: 0.1, far: 14 });
+key.shadow.camera.updateProjectionMatrix();
+scene.add(key);
+const rim = new THREE.DirectionalLight(0xff9a5e, 0.9); rim.position.set(-2.6, 1.0, -2.2); scene.add(rim);
+const fill = new THREE.DirectionalLight(0x9fc0ff, 0.85); fill.position.set(-1.2, -1.4, 2.4); scene.add(fill);
+
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(radius * 8, radius * 8),
+  new THREE.ShadowMaterial({ opacity: 0.4 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -radius * 0.55;
+ground.receiveShadow = true;
+scene.add(ground);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.07;
+controls.enablePan = false;
+controls.minDistance = radius * 1.05;
+controls.maxDistance = radius * 4;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.9;
+controls.target.set(0, 0, 0);
+
+camera.position.set(radius * 1.55, radius * 0.72, radius * 1.85);
+camera.lookAt(0, 0, 0);
+
+let idle = 0;
+controls.addEventListener('start', () => { controls.autoRotate = false; idle = 0; });
+controls.addEventListener('end', () => { idle = performance.now(); });
+
+function size() {
+  const w = host.clientWidth, h = host.clientHeight;
+  if (w < 2 || h < 2) return;
+  const dpr = Math.min(devicePixelRatio, 2);
+  if (Math.abs(renderer.domElement.width - w * dpr) < 1 && Math.abs(renderer.domElement.height - h * dpr) < 1) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(size).observe(host);
+new IntersectionObserver(size).observe(host);
+addEventListener('resize', size);
+[0, 100, 400, 1200, 2500].forEach(t => setTimeout(size, t));
+size();
+
+renderer.setAnimationLoop(() => {
+  size();
+  if (!controls.autoRotate && idle && performance.now() - idle > 2600) controls.autoRotate = true;
+  controls.update();
+  renderer.render(scene, camera);
+});
+window.__v = { scene, camera, renderer, model, radius, controls };
+</script>
+</body>
+</html>
