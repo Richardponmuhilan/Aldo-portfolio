@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="viewer-perf.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amphibious UAV — mission profile</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT"
+  }
+}
+</script>
+<style>
+  html,body{height:100%;margin:0;background:#0d0f11;overflow:hidden;
+    font-family:'IBM Plex Mono',ui-monospace,monospace;color:#e8eaed}
+  #view{position:absolute;inset:0}
+  #view canvas{display:block;width:100%;height:100%}
+  #hud{position:absolute;left:0;right:0;bottom:0;padding:14px 16px;pointer-events:none;
+    display:flex;justify-content:space-between;align-items:flex-end;gap:16px}
+  #phase{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent,#ff6a2b)}
+  #clock{font-size:11px;letter-spacing:.18em;color:#7b838c}
+  #bar{position:absolute;left:0;bottom:0;height:2px;width:100%;background:rgba(255,255,255,.07)}
+  #bar > i{display:block;height:100%;width:100%;transform-origin:0 50%;transform:scaleX(0);background:var(--accent,#ff6a2b);will-change:transform}
+  #steps{position:absolute;left:16px;top:14px;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+  #steps span{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#4d555d;transition:color .3s}
+  #steps span[data-on]{color:#e8eaed}
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div id="steps"></div>
+<div id="hud"><p id="phase">Transit</p><p id="clock">T+00.0 s</p></div>
+<div id="bar"><i></i></div>
+<script type="module">
+import * as THREE from 'three';
+import { buildAmphibiousUAV } from './amph-model.js';
+
+const host = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.25));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.18;
+host.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const skyTex = (() => {
+  const c = document.createElement('canvas'); c.width = 8; c.height = 256;
+  const g = c.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, 256);
+  gr.addColorStop(0, '#0b1420'); gr.addColorStop(0.55, '#1a2833'); gr.addColorStop(0.82, '#3b4038'); gr.addColorStop(1, '#4a4436');
+  g.fillStyle = gr; g.fillRect(0, 0, 8, 256);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+})();
+const sky = new THREE.Mesh(new THREE.SphereGeometry(140, 32, 20), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false }));
+scene.add(sky);
+scene.fog = new THREE.Fog(0x2a3138, 30, 96);
+const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 200);
+
+/* ---- river + banks ---- */
+const water = new THREE.Mesh(
+  new THREE.PlaneGeometry(240, 22, 1, 1),
+  new THREE.MeshStandardMaterial({ color: 0x14323d, roughness: 0.14, metalness: 0.62 })
+);
+water.rotation.x = -Math.PI / 2; water.receiveShadow = true; scene.add(water);
+
+const REED_GEO = new THREE.ConeGeometry(1, 1, 6), REED_MAT = new THREE.MeshStandardMaterial({ color: 0x3b4d2c, roughness: 1 });
+function bank(z) {
+  const g = new THREE.Group();
+  const soil = new THREE.Mesh(new THREE.BoxGeometry(240, 0.5, 26),
+    new THREE.MeshStandardMaterial({ color: 0x33402a, roughness: 0.95 }));
+  soil.position.set(0, -0.18, z * 24); soil.receiveShadow = true; g.add(soil);
+  const edge = new THREE.Mesh(new THREE.BoxGeometry(240, 0.14, 1.2),
+    new THREE.MeshStandardMaterial({ color: 0x4a4b36, roughness: 1 }));
+  edge.position.set(0, 0.02, z * 11.4); g.add(edge);
+  for (let i = 0; i < 26; i++) {
+    const h = 0.6 + Math.random() * 1.6;
+    const r = new THREE.Mesh(REED_GEO, REED_MAT);
+    r.scale.set(0.25 + Math.random() * 0.4, h, 0.25 + Math.random() * 0.4);
+    r.position.set(-100 + Math.random() * 200, h / 2 - 0.05, z * (12.5 + Math.random() * 9));
+    g.add(r);
+  }
+  return g;
+}
+scene.add(bank(1), bank(-1));
+
+// drifting flow streaks so the river reads as moving
+const streaks = [];
+const streakMat = new THREE.MeshBasicMaterial({ color: 0x9ad2e6, transparent: true, opacity: 0.26 });
+for (let i = 0; i < 90; i++) {
+  const s = new THREE.Mesh(new THREE.PlaneGeometry(1.4 + Math.random() * 3.4, 0.045), streakMat);
+  s.rotation.x = -Math.PI / 2;
+  s.position.set(-60 + Math.random() * 120, 0.012, -10 + Math.random() * 20);
+  s.userData.v = 2.2 + Math.random() * 1.8;
+  scene.add(s); streaks.push(s);
+}
+
+/* ---- lighting ---- */
+scene.add(new THREE.HemisphereLight(0xbcd8f0, 0x2a3320, 1.5));
+scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+const key = new THREE.DirectionalLight(0xfff0e0, 2.6);
+key.position.set(8, 12, 6); key.castShadow = true;
+key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0009;
+Object.assign(key.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40 });
+key.shadow.camera.updateProjectionMatrix();
+scene.add(key);
+const rim = new THREE.DirectionalLight(0xff8a4a, 0.85); rim.position.set(-9, 3, -8); scene.add(rim);
+
+/* ---- aircraft ---- */
+const craft = new THREE.Group();
+const uav = buildAmphibiousUAV();
+uav.rotation.y = 0;            // model already faces -X; craft +X is the flight direction
+uav.traverse(o => { if (o.isMesh) { o.castShadow = true; } });
+craft.add(uav);
+craft.scale.setScalar(1.35);
+scene.add(craft);
+key.target = craft; scene.add(key.target);
+
+/* ---- spray + ripples ---- */
+const sprayGeo = new THREE.BufferGeometry();
+const N = 260, sp = new Float32Array(N * 3), sv = [];
+for (let i = 0; i < N; i++) { sp[i * 3 + 1] = -99; sv.push(new THREE.Vector3()); }
+sprayGeo.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+const dot = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d'); const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c);
+})();
+const spray = new THREE.Points(sprayGeo, new THREE.PointsMaterial({
+  size: 0.13, map: dot, transparent: true, depthWrite: false, opacity: 0.85, color: 0xd8ecf5
+}));
+scene.add(spray);
+let sprayHead = 0;
+const emit = (x, z, power) => {
+  for (let k = 0; k < 4; k++) {
+    const i = sprayHead = (sprayHead + 1) % N;
+    sp[i * 3] = x + (Math.random() - .5) * 0.5;
+    sp[i * 3 + 1] = 0.04;
+    sp[i * 3 + 2] = z + (Math.random() - .5) * 0.6;
+    sv[i].set((Math.random() - .3) * 1.2 * power, (0.9 + Math.random() * 1.5) * power, (Math.random() - .5) * 1.6 * power);
+  }
+};
+
+const ripples = [];
+const ringGeo = new THREE.RingGeometry(0.3, 0.36, 48);
+for (let i = 0; i < 8; i++) {
+  const m = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({
+    color: 0x86c6de, transparent: true, opacity: 0, depthWrite: false
+  }));
+  m.rotation.x = -Math.PI / 2; m.position.y = 0.015; m.userData.t = 1;
+  scene.add(m); ripples.push(m);
+}
+let ripIdx = 0;
+const ripple = (x, z, warm) => {
+  const m = ripples[ripIdx = (ripIdx + 1) % ripples.length];
+  m.material.color.setHex(warm ? 0xff7a3c : 0x86c6de);
+  m.position.set(x, 0.015, z); m.userData.t = 0;
+};
+
+/* ---- mission path ---- */
+const KEY = [
+  // t,   x,     y,    z,   pitch°, roll°
+  [0.00, -30,  7.0, -7.0,  -2,  -14],
+  [0.12, -22,  5.4, -4.2,  -3,   14],
+  [0.24, -15,  3.4, -1.4,  -4,    6],
+  [0.34, -10,  1.7, -0.2,  -5,    0],
+  [0.42,  -6,  0.6,  0.0,   2,    0],
+  [0.47,  -4,  0.16, 0.0,   5,    0],
+  [0.51,  -3,  0.09, 0.0,   1,    0],
+  [0.57,  -2,  0.09, 0.0,   0,    0],
+  [0.70,   0,  0.09, 0.0,   0,    0],
+  [0.76,   1,  0.09, 0.0,   0,    0],
+  [0.83,   5,  0.10, 0.0,   3,    0],
+  [0.88,   9,  0.55, 0.0,   7,    0],
+  [0.94,  16,  2.6,  0.6,   4,   -8],
+  [1.00,  26,  6.0,  3.2,   1,  -16]
+];
+// monotone cubic (Fritsch–Carlson) per channel: smooth velocity through every key, no overshoot
+const TS = KEY.map(k => k[0]);
+const CH = [1, 2, 3, 4, 5].map(j => {
+  const y = KEY.map(k => k[j]), n = y.length, d = [], mS = [];
+  for (let i = 0; i < n - 1; i++) d.push((y[i + 1] - y[i]) / (TS[i + 1] - TS[i]));
+  mS[0] = d[0]; mS[n - 1] = d[n - 2];
+  for (let i = 1; i < n - 1; i++) mS[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (d[i] === 0) { mS[i] = mS[i + 1] = 0; continue; }
+    const a = mS[i] / d[i], b = mS[i + 1] / d[i], h = a * a + b * b;
+    if (h > 9) { const k = 3 / Math.sqrt(h); mS[i] = k * a * d[i]; mS[i + 1] = k * b * d[i]; }
+  }
+  return { y, mS };
+});
+function sample(t) {
+  t = Math.min(1, Math.max(0, t));
+  let i = 0; while (i < TS.length - 2 && t > TS[i + 1]) i++;
+  const h = TS[i + 1] - TS[i], u = (t - TS[i]) / h, u2 = u * u, u3 = u2 * u;
+  const h00 = 2 * u3 - 3 * u2 + 1, h10 = u3 - 2 * u2 + u, h01 = -2 * u3 + 3 * u2, h11 = u3 - u2;
+  const v = CH.map(c => h00 * c.y[i] + h10 * h * c.mS[i] + h01 * c.y[i + 1] + h11 * h * c.mS[i + 1]);
+  return { x: v[0], y: v[1], z: v[2], pitch: v[3], roll: v[4] };
+}
+
+const PHASES = [
+  [0.24, 'Transit'], [0.42, 'Approach'], [0.52, 'Touchdown'],
+  [0.76, 'Sampling'], [0.90, 'Take-off run'], [1.01, 'Climb-out']
+];
+const stepsEl = document.getElementById('steps');
+PHASES.forEach(([, label]) => {
+  const s = document.createElement('span'); s.textContent = label; stepsEl.appendChild(s);
+});
+const stepEls = [...stepsEl.children];
+const phaseEl = document.getElementById('phase'), clockEl = document.getElementById('clock');
+const barEl = document.querySelector('#bar > i');
+
+/* ---- loop ---- */
+const DUR = 19;
+let t0 = performance.now(), visible = true, last = t0;
+new IntersectionObserver(e => { visible = e[0].isIntersecting; }, { threshold: 0.05 }).observe(host);
+
+const camPos = new THREE.Vector3(-34, 9, 12), camAim = new THREE.Vector3();
+const smoothstep = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
+const tmp = new THREE.Vector3();
+
+function size() {
+  const w = host.clientWidth, h = host.clientHeight;
+  if (w < 2 || h < 2) return;
+  const dpr = renderer.getPixelRatio();
+  if (Math.abs(renderer.domElement.width - Math.round(w * dpr)) < 2 && Math.abs(renderer.domElement.height - Math.round(h * dpr)) < 2) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(size).observe(host);
+new IntersectionObserver(size).observe(host);
+addEventListener('resize', size);
+[0, 120, 500, 1500].forEach(ms => setTimeout(size, ms));
+
+renderer.setAnimationLoop((now) => {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (!visible) { t0 += dt * 1000; renderer.render(scene, camera); return; }
+
+  const t = ((now - t0) / 1000 % DUR) / DUR;
+  const s = sample(t);
+
+  craft.position.set(s.x, s.y, s.z);
+  const bob = s.y < 0.2 ? Math.sin(now / 520) * 0.012 : 0;
+  craft.position.y += bob;
+  craft.rotation.set(THREE.MathUtils.degToRad(s.pitch) * -1, 0, THREE.MathUtils.degToRad(s.roll));
+
+  // water contact effects
+  const onWater = t > 0.47 && t < 0.885;
+  if (onWater) {
+    const fast = (t < 0.55) || (t > 0.78);
+    const sampling = t > 0.57 && t < 0.78;
+    if (fast) emit(s.x - 0.5, s.z, t > 0.78 ? 1.1 : 1.4);
+    if (Math.random() < (fast ? 0.35 : 0.22)) ripple(s.x - 0.3 + Math.random() * 0.6, s.z + (Math.random() - .5) * 0.7, sampling);
+  }
+
+  // spray physics
+  for (let i = 0; i < N; i++) {
+    if (sp[i * 3 + 1] < -50) continue;
+    const v = sv[i];
+    sp[i * 3] += v.x * dt; sp[i * 3 + 1] += v.y * dt; sp[i * 3 + 2] += v.z * dt;
+    v.y -= 7.5 * dt;
+    if (sp[i * 3 + 1] < 0.02) sp[i * 3 + 1] = -99;
+  }
+  sprayGeo.attributes.position.needsUpdate = true;
+
+  for (const m of ripples) {
+    if (m.userData.t >= 1) { m.material.opacity = 0; continue; }
+    m.userData.t += dt * 0.7;
+    const k = m.userData.t;
+    m.scale.setScalar(1 + k * 5.5);
+    m.material.opacity = 0.45 * (1 - k);
+  }
+
+  for (const st of streaks) {
+    st.position.x += st.userData.v * dt;
+    if (st.position.x > 62) st.position.x = -62;
+  }
+
+  // camera: wide on transit, low and close on the water, pulls out on climb
+  const nk = smoothstep(0.38, 0.47, t) * (1 - smoothstep(0.86, 0.95, t));
+  const fx = -7.5 - 5 * Math.abs(0.5 - t);
+  const ox = fx + (-3.4 - fx) * nk, oy = 3.6 + (1.15 - 3.6) * nk, oz = 10.5 + (5.6 - 10.5) * nk;
+  camPos.lerp(tmp.set(s.x + ox, Math.max(0.9, s.y * 0.55 + oy), s.z + oz), 1 - Math.pow(0.02, dt));
+  camera.position.copy(camPos);
+  camAim.lerp(tmp.set(s.x + 1.6, s.y * 0.7 + 0.3, s.z), 1 - Math.pow(0.01, dt));
+  camera.lookAt(camAim);
+
+  let pi = 0; while (pi < PHASES.length - 1 && t > PHASES[pi][0]) pi++;
+  if (phaseEl.textContent !== PHASES[pi][1]) {
+    phaseEl.textContent = PHASES[pi][1];
+    stepEls.forEach((el, i) => i === pi ? el.setAttribute('data-on', '') : el.removeAttribute('data-on'));
+  }
+  const ck = 'T+' + (t * DUR).toFixed(1).padStart(4, '0') + ' s'; if (clockEl.textContent !== ck) clockEl.textContent = ck;
+  barEl.style.transform = 'scaleX(' + t.toFixed(4) + ')';
+
+  renderer.render(scene, camera);
+});
+window.__m = { scene, camera, craft, sample, renderAt(t) {
+  size();
+  const s = sample(t);
+  craft.position.set(s.x, s.y, s.z);
+  craft.rotation.set(THREE.MathUtils.degToRad(s.pitch) * -1, 0, THREE.MathUtils.degToRad(s.roll));
+  const near = t > 0.44 && t < 0.9;
+  const off = near ? [-3.4, 1.15, 5.6] : [-7.5 - 5 * Math.abs(0.5 - t), 3.6, 10.5];
+  camera.position.set(s.x + off[0], Math.max(0.9, s.y * 0.55 + off[1]), s.z + off[2]);
+  camera.lookAt(s.x + 1.6, s.y * 0.7 + 0.3, s.z);
+  renderer.render(scene, camera);
+} };
+</script>
+</body>
+</html>

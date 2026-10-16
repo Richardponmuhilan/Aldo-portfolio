@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="viewer-perf.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MALE UAV — exploded view</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9"
+  }
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500&display=swap" rel="stylesheet">
+<style>
+  html,body{height:100%;margin:0;background:#0d0f11;overflow:hidden}
+  #view{position:absolute;inset:0}
+  #view canvas{display:block;width:100%;height:100%;touch-action:none}
+  .lb{position:absolute;font:500 12px/1.2 "Space Grotesk",Helvetica,Arial,sans-serif;color:#e8e6e2;white-space:nowrap;transform:translate(-50%,-50%);transition:none}
+  #hint{position:absolute;left:16px;bottom:14px;font:11px/1 'IBM Plex Mono',ui-monospace,monospace;
+        letter-spacing:.18em;text-transform:uppercase;color:#6c757e;pointer-events:none;user-select:none}
+</style>
+</head>
+<body>
+<div id="view"></div>
+<svg id="lines" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></svg><div id="labels" style="position:absolute;inset:0;pointer-events:none"></div><p id="hint">Exploded view · drag to rotate</p>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { buildMaleUAV } from './male-model.js';
+
+const host = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.85;
+host.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0f11).lerp(new THREE.Color(window.ACCENT || 0x0d0f11), .05);
+
+const camera = new THREE.PerspectiveCamera(32, 1, 0.05, 60);
+
+const model = buildMaleUAV();
+const box = new THREE.Box3().setFromObject(model);
+const centre = box.getCenter(new THREE.Vector3());
+model.position.sub(centre);
+scene.add(model);
+const radius = box.getSize(new THREE.Vector3()).length() * 0.5;
+
+// lighting: cool key, warm rim, soft ambient
+scene.add(new THREE.HemisphereLight(0xcfe0f0, 0x27313a, 1.15));
+const key = new THREE.DirectionalLight(0xffffff, 2.1);
+key.position.set(2.2, 3.0, 1.8);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.bias = -0.0009;
+const d = radius * 1.3;
+Object.assign(key.shadow.camera, { left: -d, right: d, top: d, bottom: -d, near: 0.1, far: 14 });
+key.shadow.camera.updateProjectionMatrix();
+scene.add(key);
+const rim = new THREE.DirectionalLight(0xff9a5e, 0.9); rim.position.set(-2.6, 1.0, -2.2); scene.add(rim);
+const fill = new THREE.DirectionalLight(0x9fc0ff, 0.85); fill.position.set(-1.2, -1.4, 2.4); scene.add(fill);
+
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(radius * 8, radius * 8),
+  new THREE.ShadowMaterial({ opacity: 0.32 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = box.min.y - centre.y - 0.01;
+ground.receiveShadow = true;
+scene.add(ground);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.07;
+controls.enablePan = false;
+controls.minDistance = radius * 1.05;
+controls.maxDistance = radius * 4;
+controls.enableZoom = false;
+controls.autoRotate = false;
+controls.target.set(0, 0, 0);
+
+camera.position.set(radius * 1.55, radius * 1.35, radius * 1.75);
+camera.lookAt(0, 0, 0);
+
+let idle = 0;
+
+
+function size() {
+  const w = host.clientWidth, h = host.clientHeight;
+  if (w < 2 || h < 2) return;
+  const dpr = Math.min(devicePixelRatio * 1.5, 3);
+  if (Math.abs(renderer.domElement.width - w * dpr) < 1 && Math.abs(renderer.domElement.height - h * dpr) < 1) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(size).observe(host);
+new IntersectionObserver(size).observe(host);
+addEventListener('resize', size);
+[0, 100, 400, 1200, 2500].forEach(t => setTimeout(size, t));
+size();
+
+const parts = model.userData.parts, keys = Object.keys(parts);
+const base = {}; keys.forEach(k => base[k] = parts[k].obj.position.clone());
+const svg = document.getElementById('lines'), lab = document.getElementById('labels'), NS = 'http://www.w3.org/2000/svg';
+const L = keys.filter(k => parts[k].label).map(k => {
+  const el = document.createElement('div'); el.className = 'lb'; el.textContent = parts[k].label; lab.appendChild(el);
+  const ln = document.createElementNS(NS, 'line'); ln.setAttribute('stroke', '#93979e'); ln.setAttribute('stroke-width', '1'); svg.appendChild(ln);
+  const dot = document.createElementNS(NS, 'circle'); dot.setAttribute('r', '2.5'); dot.setAttribute('fill', '#f08a3c'); svg.appendChild(dot);
+  return { k, el, ln, dot };
+});
+keys.forEach(k => parts[k].obj.position.copy(base[k]).add(parts[k].off));
+const xb = new THREE.Box3().setFromObject(model), xc = xb.getCenter(new THREE.Vector3()), xr = xb.getSize(new THREE.Vector3()).length() * .5;
+keys.forEach(k => parts[k].obj.position.copy(base[k]));
+xc.z += xr * .12; xc.x -= xr * .05;
+controls.target.copy(xc);
+camera.fov = 24; camera.updateProjectionMatrix();
+camera.position.copy(xc).add(new THREE.Vector3(.62, .62, .72).normalize().multiplyScalar(xr * 3.25));
+const DIR = { spar: [-1, -.25], cowling: [.1, -1], rudderR: [-.2, -1], wingletR: [-1, .5], aileronR: [-.5, -1], wingR: [.1, 1], strake: [.5, 1], fuselage: [1, .3], canard: [.3, 1] };
+controls.minDistance = xr; controls.maxDistance = xr * 4;
+const tgt = new THREE.Vector3();
+const ease = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+const T = 11, t0 = performance.now(), v3 = new THREE.Vector3();
+let lastA = 0;
+const tick = (tf) => {
+  size();
+  if (camera.aspect !== lastA) { lastA = camera.aspect; const dir = camera.position.clone().sub(controls.target).normalize(); camera.position.copy(controls.target).addScaledVector(dir, xr * 3.25 * Math.max(1, 1.7 / lastA)); controls.maxDistance = xr * 8; }
+  const t = tf ?? ((performance.now() - t0) / 1000) % T;
+  const e = t < 1.5 ? 0 : t < 3.5 ? ease((t - 1.5) / 2) : t < 8.5 ? 1 : t < 10.5 ? 1 - ease((t - 8.5) / 2) : 0;
+  keys.forEach(k => parts[k].obj.position.copy(base[k]).addScaledVector(parts[k].off, e));
+  controls.update();
+  model.userData.prop.rotation.x += 0.3 * (1 - e);
+  renderer.render(scene, camera);
+  const w = host.clientWidth, hh = host.clientHeight, op = ease((e - .75) / .25);
+  const small = w < 520;
+  L.forEach(({ k, el, ln, dot }) => {
+    const p = parts[k];
+    v3.copy(p.anchor).add(p.obj.position).add(model.position).project(camera);
+    const ax = (v3.x * .5 + .5) * w, ay = (-v3.y * .5 + .5) * hh;
+    tgt.copy(xc).project(camera); const cx = (tgt.x * .5 + .5) * w, cy = (-tgt.y * .5 + .5) * hh;
+    let dx = ax - cx, dy = ay - cy; if (DIR[k]) [dx, dy] = DIR[k]; const n = Math.hypot(dx, dy) || 1; dx /= n; dy /= n;
+    const d = small ? 34 : 60, lx = ax + dx * d, ly = ay + dy * d;
+    el.style.left = lx + 'px'; el.style.top = ly + 'px'; el.style.opacity = op; el.style.fontSize = small ? '10px' : '12px';
+    ln.setAttribute('x1', ax); ln.setAttribute('y1', ay); ln.setAttribute('x2', ax + dx * (d - 12)); ln.setAttribute('y2', ay + dy * (d - 12)); ln.setAttribute('opacity', op);
+    dot.setAttribute('cx', ax); dot.setAttribute('cy', ay); dot.setAttribute('opacity', op);
+  });
+};
+renderer.setAnimationLoop(() => tick());
+window.__tick = tick;
+window.__v = { scene, camera, renderer, model, radius, controls };
+</script>
+</body>
+</html>

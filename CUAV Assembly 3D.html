@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="viewer-perf.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C-UAS interceptor — 3D assembly</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9"
+  }
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html,body{height:100%;margin:0;background:#0d0f11;overflow:hidden;font-family:'IBM Plex Mono',ui-monospace,monospace}
+  #view{position:absolute;inset:0}
+  #view canvas{display:block;width:100%;height:100%;touch-action:none}
+</style>
+</head>
+<body>
+<div id="view"></div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const host = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.25;
+host.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0d0f11).lerp(new THREE.Color(window.ACCENT || 0x0d0f11), .05);
+const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+
+const M = (c, r = .6, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
+const BLUE = M(0x2536c4, .5), BLACK = M(0x34363b, .8), MOTOR = M(0x121316, .35, .6), STEEL = M(0xb9bdc2, .3, .9),
+      HOLE = M(0x050506, 1), PCB = M(0x1f6b3a, .55), PCB2 = M(0x23262c, .5, .2), LENS = M(0x0a1420, .1, .8);
+
+const mm = v => v / 100; // model in mm, world in dm
+const mesh = (g, m) => { const o = new THREE.Mesh(g, m); o.castShadow = o.receiveShadow = true; return o; };
+function lathe(y0, y1, rf, n = 28) {
+  const pts = []; for (let i = 0; i <= n; i++) { const t = i / n; pts.push(new THREE.Vector2(mm(rf(t)), mm(y0 + (y1 - y0) * t))); }
+  return new THREE.LatheGeometry(pts, 72);
+}
+const disc = (r, y, m, flip) => { const d = mesh(new THREE.CircleGeometry(mm(r), 48), m); d.rotation.x = flip ? Math.PI / 2 : -Math.PI / 2; d.position.y = mm(y); return d; };
+const dot = (r, y, a, m = HOLE, s = 2.2) => { const d = mesh(new THREE.SphereGeometry(mm(s), 10, 8), m); d.position.set(Math.cos(a) * mm(r), mm(y), Math.sin(a) * mm(r)); return d; };
+
+// profile (tail y=0 → nose tip y=600), axis = local Y
+const rTail = t => 14 + 30 * (1 - (1 - t) ** 2);
+const rRear = t => 44 + 11 * (1 - (1 - t) ** 2);
+const rAft = t => 55 - 10 * t * t;
+const rNose = t => 16 + 29 * (1 - t ** 1.7);
+
+const model = new THREE.Group();
+const parts = [];
+const part = (label, off, build) => { const g = new THREE.Group(); build(g); model.add(g); parts.push({ g, label, off: new THREE.Vector3(...off).multiplyScalar(0.01) }); return g; };
+
+part('Aft fuselage · CF-nylon · carries the wings and motors', [0, 0, 0], g => {
+  g.add(mesh(lathe(80, 250, rRear), BLACK));
+  for (let i = 0; i < 4; i++) {
+    const a = Math.PI / 4 + i * Math.PI / 2, arm = new THREE.Group(); arm.rotation.y = -a;
+    const w = mesh(new THREE.BoxGeometry(mm(150), mm(118), mm(7)), BLACK); w.position.set(mm(50 + 75), mm(172), 0); arm.add(w);
+    const nac = mesh(new THREE.CylinderGeometry(mm(22), mm(20), mm(132), 32, 1, true), BLACK); nac.position.set(mm(212), mm(172), 0); arm.add(nac);
+    const nb = mesh(new THREE.CircleGeometry(mm(20), 32), BLACK); nb.rotation.x = Math.PI / 2; nb.position.set(mm(212), mm(106), 0); arm.add(nb);
+    const win = mesh(new THREE.BoxGeometry(mm(4), mm(42), mm(18)), HOLE); win.position.set(mm(233), mm(140), 0); arm.add(win);
+    g.add(arm);
+  }
+  g.add(dot(55, 240, 0.4), dot(55, 240, 2.4), dot(47, 90, 1.2));
+});
+part('Forward fuselage · PETG', [0, 200, 0], g => {
+  g.add(mesh(lathe(250, 470, rAft), BLUE));
+  g.add(dot(45, 462, 0.6), dot(54, 262, 0.9, HOLE, 1.6));
+});
+part('Nose section · PETG · camera for target acquisition', [0, 300, 0], g => {
+  g.add(mesh(lathe(470, 600, rNose), BLUE));
+  g.add(disc(16, 599, HOLE));
+  const lens = mesh(new THREE.CylinderGeometry(mm(11), mm(11), mm(10), 28), LENS); lens.position.y = mm(592); g.add(lens);
+  g.add(dot(34, 555, -0.1), dot(34, 555, 0.1), dot(44, 478, 0.6));
+});
+part('Tail section · PETG', [0, -160, 0], g => {
+  g.add(mesh(lathe(0, 80, rTail), BLUE)); g.add(disc(14, 0, BLUE, true));
+  const w = mesh(new THREE.BoxGeometry(mm(6), mm(16), mm(16)), HOLE); w.position.set(mm(38), mm(44), 0); g.add(w);
+});
+part('Motors · four pusher units on the wing nacelles', [0, -120, 0], g => {
+  for (let i = 0; i < 4; i++) {
+    const a = Math.PI / 4 + i * Math.PI / 2, m = new THREE.Group(); m.rotation.y = -a;
+    const bell = mesh(new THREE.CylinderGeometry(mm(19), mm(19), mm(24), 32), MOTOR); bell.position.set(mm(212), mm(94), 0); m.add(bell);
+    const band = mesh(new THREE.CylinderGeometry(mm(19.4), mm(19.4), mm(5), 32), STEEL); band.position.set(mm(212), mm(98), 0); m.add(band);
+    const sh = mesh(new THREE.CylinderGeometry(mm(3), mm(3), mm(26), 12), STEEL); sh.position.set(mm(212), mm(70), 0); m.add(sh);
+    const nut = mesh(new THREE.CylinderGeometry(mm(6), mm(6), mm(6), 6), STEEL); nut.position.set(mm(212), mm(62), 0); m.add(nut);
+    g.add(m);
+  }
+});
+
+// lay horizontal: nose → +X
+const holder = new THREE.Group(); model.position.y = -mm(300);
+holder.add(model); scene.add(holder);
+
+scene.add(new THREE.HemisphereLight(0xdfe8f4, 0x22272d, 1.25));
+const key = new THREE.DirectionalLight(0xffffff, 2.4); key.position.set(5, 9, 6); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9 }); scene.add(key);
+const rim = new THREE.DirectionalLight(0xff9a5e, .8); rim.position.set(-6, 2, -4); scene.add(rim);
+const fill = new THREE.DirectionalLight(0x9fc0ff, .6); fill.position.set(-2, -3, 5); scene.add(fill);
+const ground = mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: .3 })); ground.rotation.x = -Math.PI / 2; ground.position.y = -4.75; scene.add(ground);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.enablePan = false; controls.minDistance = 5; controls.maxDistance = 30;
+camera.position.set(8.5, 3.2, 11.5); controls.target.set(0, 0.5, 0);
+let userAt = 0; controls.addEventListener('start', () => { userAt = performance.now(); });
+
+function size() { const w = host.clientWidth, h = host.clientHeight; if (w < 2 || h < 2) return; renderer.setSize(w, h, false); camera.aspect = w / h;
+  camera.fov = w / h < 1 ? 46 : 36; camera.updateProjectionMatrix(); }
+new ResizeObserver(size).observe(host); size();
+
+// timeline: parts assemble in order (rear already placed)
+const ease = k => k < .5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2;
+const HOLD0 = 1.6, STEP = 1.3, HOLD1 = 4.5, OUT = 1.8;
+const order = [1, 2, 3, 4];
+const T = HOLD0 + order.length * STEP + HOLD1 + OUT;
+
+let shown = null;
+const setStep = () => {};
+
+function draw(t) {
+  let label = parts[0].label;
+  parts.forEach((p, idx) => {
+    let k;
+    if (idx === 0) k = 1;
+    else { const j = order.indexOf(idx), s0 = HOLD0 + j * STEP; k = ease(Math.min(1, Math.max(0, (t - s0) / STEP))); if (t >= s0) label = p.label; }
+    if (t > T - OUT) k = Math.min(k, 1 - ease((t - (T - OUT)) / OUT));
+    p.g.position.copy(p.off).multiplyScalar(1 - k);
+  });
+  const done = HOLD0 + order.length * STEP;
+  if (t >= done && t < T - OUT) label = 'Assembled · bolted joints on heat-set inserts';
+  if (t >= T - OUT) label = 'Sections separate for print, repair and swap';
+  setStep(label);
+}
+const t0 = performance.now();
+renderer.setAnimationLoop(() => {
+  const t = ((performance.now() - t0) / 1000) % T;
+  draw(t);
+  if (performance.now() - userAt > 3000) holder.rotation.y += 0.0025;
+  controls.update(); renderer.render(scene, camera);
+});
+window.__seek = t => { draw(t); controls.update(); renderer.render(scene, camera); };
+</script>
+</body>
+</html>

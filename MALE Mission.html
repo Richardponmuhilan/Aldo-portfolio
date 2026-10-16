@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="viewer-perf.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MALE UAV — ISTAR mission profile</title>
+<script type="importmap">
+{
+  "imports": { "three": "https://unpkg.com/three@0.184.0/build/three.module.js" },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT"
+  }
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html,body{height:100%;margin:0;background:#0d0f11;overflow:hidden;font-family:'IBM Plex Mono',ui-monospace,monospace}
+  #view{position:absolute;left:0;right:0;top:0;bottom:104px}
+  #view canvas{display:block;width:100%;height:100%}
+  .hud{position:absolute;pointer-events:none;user-select:none;color:var(--accent,#ff8a3d)}
+  #tl{left:16px;top:14px}
+  #tl .k{font-size:10px;letter-spacing:.22em;opacity:.75;margin:0 0 6px}
+  #ph{font-size:clamp(15px,2.6vw,22px);letter-spacing:.06em;color:#f4f2ee;margin:0}
+  #tr{right:16px;top:14px;text-align:right;font-size:12px;line-height:1.6;color:#f4f2ee;white-space:nowrap}
+  #tr span{color:var(--accent,#ff8a3d)}
+  #prof{left:0;right:0;bottom:0;height:104px;box-sizing:border-box;padding:10px 12px 0;background:#0d0f11;border-top:1px solid rgba(255,255,255,.1)}
+  #prof svg{display:block;height:50px}
+  #plab{margin-top:8px;text-align:center;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent,#ff8a3d);transition:opacity .35s,transform .35s}
+  #plab.out{opacity:0;transform:translateY(4px)}
+  #prof svg{width:100%;overflow:visible}
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div class="hud" id="prof"><svg id="psvg" viewBox="0 0 1000 74" preserveAspectRatio="none"></svg><div id="plab"></div></div>
+<script type="module">
+import * as THREE from 'three';
+import { buildMaleUAV } from './male-model.js';
+
+const host = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.9;
+host.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0f11).lerp(new THREE.Color(window.ACCENT || 0x0d0f11), .05);
+scene.fog = new THREE.Fog(0x0d0f11, 60, 260);
+const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 600);
+
+const model = buildMaleUAV();
+const box = new THREE.Box3().setFromObject(model);
+const c0 = box.getCenter(new THREE.Vector3());
+model.position.sub(c0);
+const R = box.getSize(new THREE.Vector3()).length() * 0.5;
+const S = 8 / R; // normalise aircraft to ~8 world units diameter
+const inner = new THREE.Group(); inner.add(model); inner.scale.setScalar(S * 0.8); inner.rotation.y = -Math.PI / 2;
+const ac = new THREE.Group(); ac.add(inner); scene.add(ac);
+
+scene.add(new THREE.HemisphereLight(0xcfe0f0, 0x20262c, 1.2));
+const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(40, 80, 30); scene.add(key);
+const rim = new THREE.DirectionalLight(0xff9a5e, 0.8); rim.position.set(-50, 20, -40); scene.add(rim);
+
+const U = 4; // world unit for path
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(1200, 1200), new THREE.MeshStandardMaterial({ color: 0x14181c, roughness: 1 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -1.2; scene.add(ground);
+const grid = new THREE.GridHelper(1200, 120, new THREE.Color(0x2a3036).lerp(new THREE.Color(window.ACCENT || 0x2a3036), .35), new THREE.Color(0x1c2126).lerp(new THREE.Color(window.ACCENT || 0x1c2126), .18)); grid.position.y = -1.18; scene.add(grid);
+const runway = new THREE.Mesh(new THREE.PlaneGeometry(40 * U, 22 * U), new THREE.MeshStandardMaterial({ color: 0x23282e, roughness: .9 }));
+runway.rotation.x = -Math.PI / 2; runway.position.set(8 * U, -1.16, 8 * U); scene.add(runway);
+for (let i = 0; i < 14; i++) { const m = new THREE.Mesh(new THREE.PlaneGeometry(3.5 * U, .35 * U), new THREE.MeshBasicMaterial({ color: 0x5b6168 })); m.rotation.x = -Math.PI / 2; m.position.set(-8 * U + i * 2.6 * U, -1.14, 0); scene.add(m); const n = m.clone(); n.position.z = 16 * U; scene.add(n); }
+
+// target area
+const TGT = new THREE.Vector3(40 * U, -1.1, 8 * U);
+const tg = new THREE.Group(); tg.position.copy(TGT); scene.add(tg);
+const bm = new THREE.MeshStandardMaterial({ color: 0x4a5058, roughness: .8 });
+[[0, 0, 3, 2.4, 4], [5, -3, 2.2, 1.6, 2.4], [-4, 4, 2.6, 1.4, 3.2], [3, 5, 1.8, 2.8, 1.8]].forEach(([x, z, w, h, d]) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bm); b.position.set(x, h / 2, z); tg.add(b); });
+const ringM = new THREE.MeshBasicMaterial({ color: 0xff5a2a, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+const ring = new THREE.Mesh(new THREE.RingGeometry(9, 10, 64), ringM); ring.rotation.x = -Math.PI / 2; ring.position.y = .1; tg.add(ring);
+const ring2 = new THREE.Mesh(new THREE.RingGeometry(3.4, 4, 48), ringM); ring2.rotation.x = -Math.PI / 2; ring2.position.y = .12; tg.add(ring2);
+
+// sensor cone (apex at +Y end after rotation, pointing to target)
+const coneG = new THREE.ConeGeometry(10, 1, 40, 1, true); coneG.translate(0, -.5, 0); coneG.rotateX(-Math.PI / 2);
+const coneM = new THREE.MeshBasicMaterial({ color: new THREE.Color(window.ACCENT || 0xff8a3d), transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
+const cone = new THREE.Mesh(coneG, coneM); scene.add(cone);
+
+// missile + blast
+const missile = new THREE.Mesh(new THREE.CylinderGeometry(.18, .18, 2.2, 10).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xe9e8e4, emissive: 0xff7a30, emissiveIntensity: .3 }));
+missile.visible = false; scene.add(missile);
+const blastM = new THREE.MeshBasicMaterial({ color: 0xffa14a, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+const blast = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), blastM); blast.position.copy(TGT); scene.add(blast);
+
+// flight path (piecewise)
+const H = 12 * U, LR = 8 * U;
+const C = new THREE.Vector3(40 * U, H, 8 * U);
+const lerp = (a, b, k) => a + (b - a) * k;
+const sm = k => k * k * (3 - 2 * k);
+const PH = [
+  ['Take-off', 3, k => new THREE.Vector3(lerp(-6 * U, 4 * U, k * k), 0, 0)],
+  ['Climb', 4, k => new THREE.Vector3(lerp(4 * U, 20 * U, k), H * sm(k), 0)],
+  ['Transit to area', 3, k => new THREE.Vector3(lerp(20 * U, 40 * U, k), H, 0)],
+  ['ISTAR loiter · surveillance', 7, k => { const a = k * Math.PI * 2; return new THREE.Vector3(C.x + LR * Math.sin(a), H, C.z - LR * Math.cos(a)); }],
+  ['Target acquisition', 3, k => { const a = Math.PI * 2 + k * Math.PI * .6; return new THREE.Vector3(C.x + LR * Math.sin(a), H, C.z - LR * Math.cos(a)); }],
+  ['Armed strike', 3, k => { const a = Math.PI * 2.6 + k * Math.PI * .4; return new THREE.Vector3(C.x + LR * Math.sin(a), H, C.z - LR * Math.cos(a)); }],
+  ['Return to base', 4, k => new THREE.Vector3(lerp(40 * U, 20 * U, k), H, 16 * U)],
+  ['Descent & landing', 5, k => { const x = lerp(20 * U, -6 * U, k); const d = Math.min(1, k / .7); return new THREE.Vector3(x, H * (1 - sm(d)), 16 * U); }],
+];
+const T = PH.reduce((s, p) => s + p[1], 0);
+const at = t => { let s = 0; for (let i = 0; i < PH.length; i++) { if (t < s + PH[i][1] || i === PH.length - 1) return { i, k: Math.min(1, (t - s) / PH[i][1]), p: PH[i][2](Math.min(1, (t - s) / PH[i][1])) }; s += PH[i][1]; } };
+const posAt = t => at(((t % T) + T) % T).p;
+
+// path trace
+const MAXP = 1200, tp = new Float32Array(MAXP * 3);
+const tgeo = new THREE.BufferGeometry(); tgeo.setAttribute('position', new THREE.BufferAttribute(tp, 3)); tgeo.setDrawRange(0, 0);
+const trace = new THREE.Line(tgeo, new THREE.LineDashedMaterial({ color: new THREE.Color(window.ACCENT || 0xff8a3d), dashSize: 1.6, gapSize: 1.2, transparent: true, opacity: .85 }));
+scene.add(trace); let np = 0, lastT = -1;
+
+// profile strip
+const svg = document.getElementById('psvg');
+let acc = 0, d = '';
+const altN = y => 64 - (y / H) * 52;
+for (let t = 0; t <= T; t += T / 200) { const p = posAt(Math.min(t, T - 1e-3)); d += (t ? 'L' : 'M') + (t / T * 1000).toFixed(1) + ' ' + altN(p.y).toFixed(1); }
+let marks = '';
+PH.forEach(([n, dur], i) => { const x = acc / T * 1000; if (i) marks += `<line x1="${x}" y1="6" x2="${x}" y2="68" stroke="#ffffff" stroke-opacity=".12"/>`; acc += dur; });
+svg.innerHTML = `${marks}<line x1="0" y1="64.5" x2="1000" y2="64.5" stroke="#ffffff" stroke-opacity=".2"/><path d="${d}" fill="none" stroke="#f4f2ee" stroke-opacity=".35" stroke-width="1.5" vector-effect="non-scaling-stroke"/><clipPath id="pc"><rect id="pcr" x="0" y="0" width="0" height="74"/></clipPath><path clip-path="url(#pc)" d="${d}" fill="none" stroke="#ff8a3d" stroke-width="2" vector-effect="non-scaling-stroke"/><circle id="pdot" r="4" fill="#ff8a3d"/>`;
+const pcr = document.getElementById('pcr'), pdot = document.getElementById('pdot');
+const $ = id => document.getElementById(id);
+const plab = $('plab');
+let lastI = -1;
+
+function size() {
+  const w = host.clientWidth, h = host.clientHeight; if (w < 2 || h < 2) return;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(size).observe(host); size();
+
+const camPos = new THREE.Vector3(-30 * U, 8 * U, -14 * U), camLook = new THREE.Vector3();
+let t0 = performance.now(), paused = false;
+document.addEventListener('visibilitychange', () => { paused = document.hidden; });
+const tmp = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+
+function draw(t) {
+  const { i, k, p } = at(t);
+  if (t < lastT) { np = 0; missile.visible = false; }
+  lastT = t;
+  const nxt = posAt(t + .05);
+  ac.position.copy(p);
+  ac.lookAt(nxt.x, nxt.y, nxt.z);
+  const turning = i >= 3 && i <= 5;
+  ac.rotateZ(turning ? .38 : 0);
+  model.userData.prop && (model.userData.prop.rotation.x += .45);
+
+  if (np < MAXP && (np === 0 || tmp.set(tp[np * 3 - 3], tp[np * 3 - 2], tp[np * 3 - 1]).distanceTo(p) > 1.2)) {
+    tp.set([p.x, p.y, p.z], np * 3); np++;
+    tgeo.attributes.position.needsUpdate = true; tgeo.setDrawRange(0, np); trace.computeLineDistances();
+  }
+
+  // sensor + target
+  const sensing = i === 3 || i === 4;
+  coneM.opacity += ((sensing ? (i === 4 ? .2 : .12) : 0) - coneM.opacity) * .08;
+  cone.position.copy(p); cone.lookAt(TGT); cone.scale.set(1, 1, p.distanceTo(TGT));
+  ringM.opacity += (((i >= 4 && i <= 5) ? .9 : i === 3 ? .35 : 0) - ringM.opacity) * .08;
+  ring2.scale.setScalar(i === 4 ? 1 + .15 * Math.sin(t * 8) : 1);
+
+  // missile
+  if (i === 5) {
+    const mk = Math.min(1, k / .55);
+    if (mk < 1) {
+      const s0 = PH[5][2](0); missile.visible = true;
+      tmp.lerpVectors(s0, TGT, sm(mk)); tmp.y -= Math.sin(mk * Math.PI) * 2;
+      missile.lookAt(tmp); missile.position.copy(tmp);
+    } else missile.visible = false;
+    const bk = Math.max(0, (k - .55) / .45);
+    blast.scale.setScalar(1 + bk * 14); blastM.opacity = bk > 0 ? (1 - bk) * .9 : 0;
+  } else { missile.visible = false; blastM.opacity = 0; }
+
+  // camera
+  const wide = (i >= 3 && i <= 5);
+  const look = wide ? tmp.copy(p).lerp(TGT, .55) : p;
+  camLook.lerp(look, .05);
+  const az = t * .12;
+  const want = wide
+    ? new THREE.Vector3(TGT.x - 22 * U * Math.cos(az), H + 7 * U, TGT.z - 22 * U * Math.sin(az) - 4 * U)
+    : new THREE.Vector3(p.x - 10 * U, p.y + 5 * U, p.z - 16 * U);
+  camPos.lerp(want, .03);
+  camera.position.copy(camPos); camera.lookAt(camLook);
+  renderer.render(scene, camera);
+
+  // HUD
+  if (i !== lastI) { const n = PH[i][0]; lastI = i; plab.classList.add('out'); clearTimeout(plab._t); plab._t = setTimeout(() => { plab.textContent = n; plab.classList.remove('out'); }, lastI === 0 && !plab.textContent ? 0 : 300); }
+  const f = t / T; pcr.setAttribute('width', (f * 1000).toFixed(1));
+  pdot.setAttribute('cx', f * 1000); pdot.setAttribute('cy', altN(p.y));
+}
+renderer.setAnimationLoop(() => { if (!paused) draw(((performance.now() - t0) / 1000) % T); });
+window.__seek = t => { for (let s = 0; s <= t; s += 1 / 30) draw(s); };
+</script>
+</body>
+</html>

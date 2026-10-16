@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="viewer-perf.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MALE UAV — sample internal structure</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9"
+  }
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500&display=swap" rel="stylesheet">
+<style>
+  html,body{height:100%;margin:0;background:#0d0f11;overflow:hidden}
+  #view{position:absolute;inset:0}
+  #view canvas{display:block;width:100%;height:100%;touch-action:none}
+  .lb{position:absolute;font:500 13px/1.2 "Space Grotesk",Helvetica,Arial,sans-serif;color:#e8e6e2;white-space:nowrap;transform:translate(-50%,-50%)}
+  #hint{position:absolute;left:16px;bottom:14px;font:11px/1 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.18em;text-transform:uppercase;color:#6c757e;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="view"></div>
+<svg id="lines" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></svg>
+<div id="labels" style="position:absolute;inset:0;pointer-events:none"></div>
+<p id="hint">Drag to rotate</p>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const host = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.9;
+renderer.localClippingEnabled = true;
+host.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0f11).lerp(new THREE.Color(window.ACCENT || 0x0d0f11), .05);
+const camera = new THREE.PerspectiveCamera(26, 1, 0.05, 60);
+
+scene.add(new THREE.HemisphereLight(0xdfe8f2, 0x27313a, 1.2));
+const key = new THREE.DirectionalLight(0xffffff, 2.2);
+key.position.set(2, 4, 2.5); key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
+Object.assign(key.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: .1, far: 12 });
+scene.add(key);
+const rim = new THREE.DirectionalLight(0xff9a5e, .7); rim.position.set(-3, 1, -2); scene.add(rim);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.ShadowMaterial({ opacity: .3 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -.02; ground.receiveShadow = true; scene.add(ground);
+
+// section planes: X keeps x < cX, Z keeps z < cZ
+const clipX = new THREE.Plane(new THREE.Vector3(-1, 0, 0), 10), clipZ = new THREE.Plane(new THREE.Vector3(0, 0, -1), 10);
+const mat = c => new THREE.MeshStandardMaterial({ color: c, roughness: .55, metalness: .15, transparent: true, clippingPlanes: [clipX, clipZ], clipShadows: true, side: THREE.DoubleSide });
+const capMat = () => new THREE.MeshBasicMaterial({ color: 0xf08a3c, side: THREE.DoubleSide, transparent: true, polygonOffset: true, polygonOffsetFactor: -2 });
+const C = { green: 0x2f6e36, blue: 0x2c5fd8, tan: 0xa88a62 };
+
+function rr(p, x0, y0, x1, y1, rt, rb) {
+  p.moveTo(x0 + rb, y0); p.lineTo(x1 - rb, y0);
+  if (rb) p.quadraticCurveTo(x1, y0, x1, y0 + rb); p.lineTo(x1, y1 - rt);
+  if (rt) p.quadraticCurveTo(x1, y1, x1 - rt, y1); p.lineTo(x0 + rt, y1);
+  if (rt) p.quadraticCurveTo(x0, y1, x0, y1 - rt); p.lineTo(x0, y0 + rb);
+  if (rb) p.quadraticCurveTo(x0, y0, x0 + rb, y0);
+  return p;
+}
+const poly = (pts, S = THREE.Shape) => { const p = new S(); pts.forEach(([x, y], i) => i ? p.lineTo(x, y) : p.moveTo(x, y)); p.closePath(); return p; };
+
+// bulkhead dimensions: C-section frame (web in bulkhead plane, flanges along x)
+const W = .56, H = .54, F = .05, BT = .044, TK = .007, D = .045, MID = H * .52, RT = .02, RB = .03;
+const X1 = 0, X2 = .9;
+function bulkhead(col, dir) {
+  const o = new THREE.Group(), m = mat(col);
+  const add = (shape, depth) => {
+    const g = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false, curveSegments: 16 });
+    const mesh = new THREE.Mesh(g, m); mesh.rotation.y = Math.PI / 2; mesh.castShadow = true; o.add(mesh);
+  };
+  const holes = [[-W / 2 + F, F, W / 2 - F, MID - BT / 2, .01, Math.max(RB - F, .008)], [-W / 2 + F, MID + BT / 2, W / 2 - F, H - F, Math.max(RT - F, .008), .01]];
+  const web = rr(new THREE.Shape(), -W / 2, 0, W / 2, H, RT, RB);
+  holes.forEach(hh => web.holes.push(rr(new THREE.Path(), ...hh)));
+  add(web, TK);
+  const outer = rr(new THREE.Shape(), -W / 2, 0, W / 2, H, RT, RB);
+  outer.holes.push(rr(new THREE.Path(), -W / 2 + TK, TK, W / 2 - TK, H - TK, Math.max(RT - TK, .005), Math.max(RB - TK, .005)));
+  add(outer, D);
+  holes.forEach(([x0, y0, x1, y1, rt, rb]) => {
+    const r = rr(new THREE.Shape(), x0, y0, x1, y1, rt, rb);
+    r.holes.push(rr(new THREE.Path(), x0 + TK, y0 + TK, x1 - TK, y1 - TK, Math.max(rt - TK, .004), Math.max(rb - TK, .004)));
+    add(r, D);
+  });
+  o.scale.x = dir; o.children[0].material = m; return o;
+}
+// C cap in (x,y) for a chord spanning y0..y1 at bulkhead station x0, flanges toward dir
+const cCap = (x0, dir, y0, y1) => poly([[0, y1], [D, y1], [D, y1 - TK], [TK, y1 - TK], [TK, y0 + TK], [D, y0 + TK], [D, y0], [0, y0]].map(([x, y]) => [x0 + dir * x, y]));
+
+// longeron: profile given in world (z,y); runs x0..x1
+function longeron(pts, x0, x1, col) {
+  const shape = poly(pts.map(([z, y]) => [-z, y]));
+  const g = new THREE.ExtrudeGeometry(shape, { depth: x1 - x0, bevelEnabled: false });
+  const mesh = new THREE.Mesh(g, mat(col)); mesh.rotation.y = Math.PI / 2; mesh.castShadow = true;
+  const cap = new THREE.Mesh(new THREE.ShapeGeometry(shape), capMat()); cap.rotation.y = Math.PI / 2;
+  const o = new THREE.Group(); o.position.x = x0; o.add(mesh); o.add(cap); o.userData = { cap, len: x1 - x0 }; return o;
+}
+const La = .05, Lb = .007;
+const Lpts = (sz, sy) => { const cz = sz * (W / 2 - TK), cy = sy > 0 ? H - TK - La : TK, dz = -sz, dy = 1;
+  return [[0, 0], [La * dz, 0], [La * dz, Lb * dy], [Lb * dz, Lb * dy], [Lb * dz, La * dy], [0, La * dy]].map(([z, y]) => [cz + z, cy + y]); };
+const tw = .07, th = .05;
+const TY = H - TK - La;
+const Tpts = [[-tw / 2, TY], [tw / 2, TY], [tw / 2, TY + Lb], [Lb / 2, TY + Lb], [Lb / 2, TY + th], [-Lb / 2, TY + th], [-Lb / 2, TY + Lb], [-tw / 2, TY + Lb]];
+
+const model = new THREE.Group(); scene.add(model);
+const parts = [];
+const b1 = bulkhead(C.green, 1); b1.position.x = X1; model.add(b1);
+const b2 = bulkhead(C.green, 1); b2.position.x = X2; model.add(b2);
+parts.push({ o: b1, base: b1.position.clone(), off: new THREE.Vector3(0, .9, 0), t0: .3 });
+parts.push({ o: b2, base: b2.position.clone(), off: new THREE.Vector3(0, .9, 0), t0: .8 });
+const lons = [];
+[[1, 1], [-1, 1], [1, -1], [-1, -1]].forEach(([sz, sy], i) => {
+  const o = longeron(Lpts(sz, sy), X1 + TK, X2, C.tan); model.add(o); lons.push(o);
+  parts.push({ o, base: o.position.clone(), off: new THREE.Vector3(0, sy * .35, sz * .7), t0: 1.8 + i * .3 });
+});
+const topT = longeron(Tpts, X1 + TK, X2, C.blue); model.add(topT); lons.push(topT);
+parts.push({ o: topT, base: topT.position.clone(), off: new THREE.Vector3(-1.2, 0, 0), t0: 3.1 });
+model.position.set(-(X2 + D) / 2, 0, 0);
+
+// bulkhead C-section caps for the Z cut
+const zCaps = new THREE.Group(); model.add(zCaps);
+[[X1, 1], [X2, 1]].forEach(([x0, dir]) => [[H - F, H], [MID - BT / 2, MID + BT / 2], [0, F]].forEach(([y0, y1]) => {
+  zCaps.add(new THREE.Mesh(new THREE.ShapeGeometry(cCap(x0, dir, y0, y1)), capMat()));
+}));
+const XCUT = 0, XEND = X2 / 2 + D + .1, ZCUT = .1, ZEND = W / 2 + .1;
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.enablePan = false; controls.enableZoom = false;
+controls.target.set(0, H / 2, 0);
+let userHold = 0;
+controls.addEventListener('start', () => userHold = Infinity);
+controls.addEventListener('end', () => userHold = performance.now() + 3000);
+const isoDir = new THREE.Vector3(.75, .5, 1).normalize(), xDir = new THREE.Vector3(1, .2, .3).normalize(), zDir = new THREE.Vector3(.35, .22, 1).normalize();
+let dist = 4.2;
+function size() {
+  const w = host.clientWidth, h = host.clientHeight; if (w < 2 || h < 2) return;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  dist = 4.2 * Math.max(1, 1.5 / camera.aspect);
+}
+new ResizeObserver(size).observe(host); size();
+camera.position.copy(controls.target).addScaledVector(isoDir, dist);
+
+const svg = document.getElementById('lines'), lab = document.getElementById('labels'), NS = 'http://www.w3.org/2000/svg';
+const mk = (text, obj, local, dx, dy) => {
+  const el = document.createElement('div'); el.className = 'lb'; el.textContent = text; lab.appendChild(el);
+  const ln = document.createElementNS(NS, 'line'); ln.setAttribute('stroke', '#93979e'); svg.appendChild(ln);
+  const dot = document.createElementNS(NS, 'circle'); dot.setAttribute('r', '2.5'); dot.setAttribute('fill', '#f08a3c'); svg.appendChild(dot);
+  return { el, ln, dot, obj, local, dx, dy };
+};
+const labels = [
+  mk('Bulkhead', b1, new THREE.Vector3(0, H * .3, -W / 2), -1, .4),
+  mk('Longerons', lons[0], new THREE.Vector3(X2 * .55, H - .03, W / 2 - .03), .5, -1),
+];
+
+const ease = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+const T = 19, t0 = performance.now(), v = new THREE.Vector3(), dir = new THREE.Vector3();
+renderer.setAnimationLoop(() => {
+  const now = performance.now(), t = ((now - t0) / 1000) % T;
+  if (Math.abs(renderer.domElement.clientWidth * 1 - host.clientWidth) > 1 || Math.abs(camera.aspect - host.clientWidth / Math.max(1, host.clientHeight)) > .01) size();
+  const out = ease((t - 17.2) / 1.3);
+  parts.forEach(p => {
+    const k = ease((t - p.t0) / .9) * (1 - out);
+    p.o.position.copy(p.base).addScaledVector(p.off, 1 - k);
+    p.o.traverse(m => { if (m.isMesh && m.material.clippingPlanes) m.material.opacity = k; });
+    p.o.visible = k > .01;
+  });
+  const xs = ease((t - 4.8) / 1.6) * (1 - ease((t - 9.2) / 1.1));
+  const zs = ease((t - 10.6) / 1.6) * (1 - ease((t - 15.4) / 1.1));
+  clipX.constant = XEND + (XCUT - XEND) * xs;
+  clipZ.constant = ZEND + (ZCUT - ZEND) * zs;
+  lons.forEach(o => { const c = o.userData.cap;
+    c.position.x = Math.min(clipX.constant - model.position.x - o.position.x, o.userData.len);
+    c.visible = xs > .02 && o.visible; c.material.opacity = Math.min(1, xs * 3); });
+  zCaps.position.z = clipZ.constant; zCaps.visible = zs > .02;
+  zCaps.children.forEach(c => c.material.opacity = Math.min(1, zs * 3));
+  if (now > userHold) {
+    const cx = ease((t - 5.4) / 2) * (1 - ease((t - 9) / 1.6)), cz = ease((t - 11.2) / 2) * (1 - ease((t - 15.2) / 1.6));
+    dir.copy(isoDir).lerp(xDir, cx).lerp(zDir, cz).normalize();
+    const cur = camera.position.clone().sub(controls.target).normalize().lerp(dir, .06).normalize();
+    camera.position.copy(controls.target).addScaledVector(cur, dist * (1 - .12 * Math.max(cx, cz)));
+  }
+  controls.update(); renderer.render(scene, camera);
+  const w = host.clientWidth, h = host.clientHeight, op = ease((t - 3.8) / .6) * (1 - out), d = w < 520 ? 34 : 56;
+  labels.forEach(L => {
+    L.obj.updateMatrixWorld(); v.copy(L.local).applyMatrix4(L.obj.matrixWorld).project(camera);
+    const ax = (v.x * .5 + .5) * w, ay = (-v.y * .5 + .5) * h, n = Math.hypot(L.dx, L.dy), ux = L.dx / n, uy = L.dy / n;
+    L.el.style.left = ax + ux * d + 'px'; L.el.style.top = ay + uy * d + 'px'; L.el.style.opacity = op;
+    L.ln.setAttribute('x1', ax); L.ln.setAttribute('y1', ay); L.ln.setAttribute('x2', ax + ux * (d - 12)); L.ln.setAttribute('y2', ay + uy * (d - 12)); L.ln.setAttribute('opacity', op);
+    L.dot.setAttribute('cx', ax); L.dot.setAttribute('cy', ay); L.dot.setAttribute('opacity', op);
+  });
+});
+window.__t = () => (performance.now() - t0) / 1000;
+</script>
+</body>
+</html>

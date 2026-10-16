@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="viewer-perf.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loitering munition — mission profile</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#0d0f11;color:#e8eaed;font-family:'IBM Plex Sans',system-ui,sans-serif}
+  #wrap{overflow:hidden;display:grid;grid-template-columns:minmax(240px,1fr) minmax(0,2.3fr);height:100%}
+  #list{order:-1}
+  @media (max-width:760px){#wrap{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}#list{max-height:42vh}}
+  @media (max-width:760px) and (min-width:380px){#wrap{grid-template-columns:minmax(170px,1fr) minmax(0,1.6fr);grid-template-rows:none}#list{max-height:none;border-bottom:0;border-right:1px solid #23272c}}
+  svg{display:block;width:100%;height:100%}
+  #list{border-right:1px solid #23272c;padding:8px 10px;display:flex;flex-direction:column;justify-content:flex-start;gap:0;overflow-y:auto;overflow-x:hidden}
+  @media (max-width:760px){#list{border-right:0;border-bottom:1px solid #23272c}}
+  .st{display:block;padding:5px 9px;border-left:2px solid transparent;transition:background .35s,border-color .35s,opacity .35s;opacity:.42}
+  .st b{font:500 10px/1.3 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#7b838c;margin-right:8px;white-space:nowrap}
+  .st h4{display:inline;margin:0;font:500 12px/1.3 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase}
+  .st p{margin:2px 0 0;font-size:11.5px;line-height:1.32;color:#b0b4ba;text-wrap:pretty}
+  .st[data-on]{opacity:1;background:rgba(255,106,43,.07);border-color:var(--accent,#ff6a2b)}
+  .st[data-on] b,.st[data-on] h4{color:var(--accent,#ff6a2b)}
+  .st[data-done]{opacity:.7}
+  html.nolist #wrap{grid-template-columns:1fr!important;grid-template-rows:none!important}
+  html.nolist #list{display:none}
+</style>
+<script>if(/[?&]nolist/.test(location.search))document.documentElement.classList.add('nolist');</script>
+</head>
+<body>
+<div id="wrap">
+<div id="scene" style="position:relative;min-height:0;min-width:0"><svg id="s" viewBox="0 10 1000 650" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b1119"></stop><stop offset=".6" stop-color="#16202b"></stop><stop offset="1" stop-color="#232b33"></stop>
+    </linearGradient>
+    <linearGradient id="cone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fc4e4" stop-opacity=".55"></stop><stop offset="1" stop-color="#8fc4e4" stop-opacity=".06"></stop>
+    </linearGradient>
+    <radialGradient id="fire"><stop offset="0" stop-color="#fff4c8"></stop><stop offset=".35" stop-color="#ffb347"></stop><stop offset=".7" stop-color="#ff5a1f" stop-opacity=".85"></stop><stop offset="1" stop-color="#ff5a1f" stop-opacity="0"></stop></radialGradient>
+  </defs>
+  <rect x="-200" y="-100" width="1600" height="900" fill="url(#sky)"></rect>
+  <g id="terrain"></g>
+  <path id="route" fill="none" stroke="#9aa3ad" stroke-width="1.4" stroke-dasharray="3 6" opacity=".55"></path>
+  <path id="trail" fill="none" stroke="#ff6a2b" stroke-width="2" opacity=".9"></path>
+  <ellipse id="orbit" fill="none" stroke="#c9ced4" stroke-width="2.4" opacity="0"></ellipse>
+  <polygon id="cone" fill="#8fc4e4" opacity="0"></polygon>
+  <g id="veh"></g>
+  <g id="box" opacity="0" fill="none" stroke="#ff6a2b" stroke-width="2"></g>
+  <text id="boxlbl" font-family="IBM Plex Mono, monospace" font-size="13" fill="#ff6a2b" opacity="0" stroke="#0d0f11" stroke-width="4" paint-order="stroke"></text>
+  <g id="launcher"></g>
+  <g id="drone"></g>
+  <g id="burst" opacity="0">
+    <circle id="flash" r="10" fill="url(#fire)"></circle>
+    <circle id="ring" r="10" fill="none" stroke="#ffd27a" stroke-width="4"></circle>
+    <g id="debris"></g>
+  </g>
+  <text id="tag" font-family="IBM Plex Mono, monospace" font-size="14" letter-spacing="2" fill="#e8eaed" opacity="0" stroke="#0d0f11" stroke-width="4" paint-order="stroke"></text>
+  <g font-family="IBM Plex Mono, monospace">
+    <text id="stnum" x="34" y="48" font-size="12" letter-spacing="3" fill="#ff6a2b">STAGE 1</text>
+    <text id="stname" x="34" y="78" font-size="24" letter-spacing="2" fill="#e8eaed">LAUNCH</text>
+    <text id="clock" x="34" y="102" font-size="12" letter-spacing="2" fill="#7b838c">T+00.0 s</text>
+  </g>
+  </svg><div style="position:absolute;left:0;right:0;bottom:0;height:3px;background:#1b1f23"><i id="bar" style="display:block;height:100%;width:0;background:#ff6a2b"></i></div></div>
+<div id="list"></div>
+</div>
+<script>
+const NS='http://www.w3.org/2000/svg';
+const $=id=>document.getElementById(id);
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+
+const STAGES=[
+  ['Stage 1','Launch','The loiter munition UAV will be launched via a portable Tube launcher.'],
+  ['Stage 2','Climb','This involves low signature climb of the UAV to a predetermined altitude (Autonomous).'],
+  ['Stage 3','Cruise','Semi-autonomous and target check (detection). Image processing and target geo-location'],
+  ['Stage 4','Loiter','The UAV loiters around the target at an altitude where it can perform recognition and to gather additional data.'],
+  ['Stage 5','Descent','The UAV descends to an altitude where it can identify the target.'],
+  ['Stage 6','Attack','On confirmation, the UAV executes a high-speed dive and destroys the target.']
+];
+const list=$('list');
+const rows=STAGES.map(([n,o,d])=>{const r=document.createElement('div');r.className='st';r.innerHTML=`<b>${n}</b><h4>${o}</h4><p>${d}</p>`;list.appendChild(r);return r;});
+
+/* ---- wireframe terrain (painter's order, far → near) ---- */
+const H=(X,Z)=>0.62*Math.exp(-((X+0.62)**2/0.05+(Z-4.3)**2/2.2))
+  +0.42*Math.exp(-((X+0.18)**2/0.02+(Z-5.6)**2/1.1))
+  +0.30*Math.exp(-((X+0.38)**2/0.012+(Z-3.3)**2/0.5))
+  +0.22*Math.exp(-((X-0.9)**2/0.05+(Z-5.8)**2/1.6))
+  +0.018*Math.sin(X*11+Z*2.3)*Math.cos(Z*3.1-X*4);
+const P=(X,Z)=>[600+X*1250/Z, 250+(700-H(X,Z)*1150)/Z];
+const T=$('terrain');
+const NX=46, NZ=34, Z0=1.35, Z1=8;
+const zs=[...Array(NZ+1)].map((_,i)=>Z1-(Z1-Z0)*Math.pow(i/NZ,0.8));
+const xs=[...Array(NX+1)].map((_,i)=>-1.35+2.7*i/NX);
+let cells='';
+for(let j=0;j<NZ;j++){
+  for(let i=0;i<NX;i++){
+    const a=P(xs[i],zs[j]),b=P(xs[i+1],zs[j]),c=P(xs[i+1],zs[j+1]),d=P(xs[i],zs[j+1]);
+    const shade=Math.round(18+Math.min(22,H((xs[i]+xs[i+1])/2,zs[j])*60));
+    cells+=`<polygon points="${a} ${b} ${c} ${d}" fill="rgb(${shade},${shade+2},${shade+5})" stroke="#4a525b" stroke-width=".7"/>`;
+  }
+}
+T.innerHTML=cells;
+
+/* ---- key points on the ground ---- */
+const LAUNCH=P(-0.62,1.95), TGT=P(0.34,2.55), VEH2=P(0.17,2.15);
+const vehicle=(g,[x,y],s,col)=>{
+  const v=el('g',{transform:`translate(${x},${y}) scale(${s})`},g);
+  el('ellipse',{cx:0,cy:4,rx:30,ry:5,fill:'#000',opacity:.45},v);
+  el('rect',{x:-26,y:-16,width:36,height:18,fill:col,stroke:'#0c0e10','stroke-width':1},v);
+  el('rect',{x:10,y:-10,width:16,height:12,fill:col,stroke:'#0c0e10','stroke-width':1},v);
+  el('rect',{x:13,y:-8,width:9,height:5,fill:'#9fb3c1'},v);
+  [-18,-4,16].forEach(cx=>el('circle',{cx,cy:3,r:4.2,fill:'#15181b'},v));
+  return v;
+};
+const tank=vehicle($('veh'),TGT,1,'#5a5f45');
+vehicle($('veh'),VEH2,.7,'#6b5a42');
+
+// tube launcher on a bipod
+const L=$('launcher');
+el('g',{},L).innerHTML=`<g transform="translate(${LAUNCH[0]},${LAUNCH[1]}) rotate(-58)">
+  <rect x="-6" y="-12" width="96" height="24" rx="4" fill="#5a4a36" stroke="#1a1612" stroke-width="1.5"/>
+  <rect x="86" y="-14" width="10" height="28" rx="2" fill="#3b3226"/>
+  <rect x="-10" y="-14" width="10" height="28" rx="2" fill="#2a241b"/></g>
+  <line x1="${LAUNCH[0]+22}" y1="${LAUNCH[1]-34}" x2="${LAUNCH[0]+52}" y2="${LAUNCH[1]+8}" stroke="#2a2d31" stroke-width="3"/>
+  <line x1="${LAUNCH[0]+22}" y1="${LAUNCH[1]-34}" x2="${LAUNCH[0]+34}" y2="${LAUNCH[1]+10}" stroke="#2a2d31" stroke-width="3"/>`;
+const MUZ=[LAUNCH[0]+Math.cos(-58*Math.PI/180)*92, LAUNCH[1]+Math.sin(-58*Math.PI/180)*92];
+
+// drone: tandem wing, side-on silhouette with swept planforms visible
+const D=$('drone');
+const dg=el('g',{},D);
+dg.innerHTML=`<g id="craft">
+  <path d="M-26 0 Q-20 -5 4 -5 L20 -3 Q27 0 20 3 L4 5 Q-20 5 -26 0Z" fill="#d6dade" stroke="#6d747c" stroke-width="1"/>
+  <path d="M14 -3 L4 -26 L-1 -26 L6 -3Z M14 3 L4 24 L-1 24 L6 3Z" fill="#c2c7cc" stroke="#6d747c" stroke-width=".8"/>
+  <path d="M-10 -3 L-20 -24 L-25 -24 L-18 -3Z M-10 3 L-20 22 L-25 22 L-18 3Z" fill="#b3b9bf" stroke="#6d747c" stroke-width=".8"/>
+  <circle cx="21" cy="0" r="2.6" fill="#8fc4e4"/>
+  <line x1="-27" y1="-7" x2="-27" y2="7" stroke="#9aa0a8" stroke-width="1.6"/>
+</g>`;
+const craft=$('craft');
+
+/* ---- flight path ---- */
+const LO={cx:700,cy:150,rx:118,ry:30};
+const C1=[430,208], ORB_L=[LO.cx-LO.rx,LO.cy], ORB_R=[LO.cx+LO.rx,LO.cy], DSC=[TGT[0]+30,TGT[1]-230];
+const segs=[
+  {d:`M${MUZ} L${MUZ[0]+40},${MUZ[1]-64}`},
+  {d:`M${MUZ[0]+40},${MUZ[1]-64} C${MUZ[0]+110},${MUZ[1]-190} 330,250 ${C1}`},
+  {d:`M${C1} C500,180 540,${LO.cy+4} ${ORB_L}`},
+  {orbit:true},
+  {d:`M${ORB_R} C${ORB_R[0]+40},${LO.cy+26} ${DSC[0]+30},${DSC[1]-60} ${DSC}`},
+  {d:`M${DSC} Q${DSC[0]+6},${DSC[1]+120} ${TGT[0]},${TGT[1]-14}`}
+];
+const helper=el('path',{fill:'none'},$('s'));
+segs.forEach(s=>{ if(s.d){ const p=el('path',{d:s.d,fill:'none'},null); $('s').appendChild(p); s.el=p; s.len=p.getTotalLength(); p.remove(); $('s').appendChild(p); p.setAttribute('stroke','none'); }});
+$('route').setAttribute('d',segs.filter(s=>s.d).map(s=>s.d).join(' '));
+$('orbit').setAttribute('cx',LO.cx);$('orbit').setAttribute('cy',LO.cy);$('orbit').setAttribute('rx',LO.rx);$('orbit').setAttribute('ry',LO.ry);
+const orbitPt=u=>{const th=u*Math.PI*3; return [LO.cx-LO.rx*Math.cos(th), LO.cy-LO.ry*Math.sin(th)];};
+
+// timeline (seconds)
+const TL=[1.3,3.2,3.0,5.2,2.2,1.2]; const IMPACT=2.6;
+const starts=[];let acc=0;TL.forEach(d=>{starts.push(acc);acc+=d;});
+const FLY=acc, DUR=FLY+IMPACT;
+
+const ease=u=>u*u*(3-2*u);
+function pos(stage,u){
+  const s=segs[stage];
+  if(s.orbit) return orbitPt(u);
+  const k=stage===5?u*u:(stage===0?1-(1-u)*(1-u):u);
+  const p=s.el.getPointAtLength(k*s.len); return [p.x,p.y];
+}
+
+// debris
+const deb=[...Array(16)].map(()=>{const a=-Math.PI*(0.1+0.8*Math.random());const v=60+Math.random()*120;return {a,v,l:el('line',{stroke:'#ffb347','stroke-width':2.2,'stroke-linecap':'round'},$('debris'))};});
+
+// trail points
+const trailPts=[];
+let t0=performance.now(), lastStage=-1;
+const LABELS=['TUBE LAUNCH','LOW SIGNATURE CLIMB','DETECTION · GEO-LOCATION','LOITER · RECOGNITION','DESCENT · IDENTIFY','TERMINAL DIVE'];
+
+function frame(now){ render(((now-t0)/1000)%DUR); requestAnimationFrame(frame); }
+function render(t){
+  if(t<0.05 && trailPts.length>40){trailPts.length=0;}
+  let st=0; while(st<5 && t>=starts[st+1]) st++;
+  const inFlight=t<FLY;
+  const u=inFlight?Math.min(1,(t-starts[st])/TL[st]):1;
+  const p=inFlight?pos(st,u):[TGT[0],TGT[1]-14];
+  const p2=inFlight?pos(st,Math.min(1,u+0.012)):p;
+  let ang=Math.atan2(p2[1]-p[1],p2[0]-p[0])*180/Math.PI;
+  if(st===3){ // on the orbit: nose follows the ellipse, foreshortened
+    const th=u*Math.PI*3; ang=Math.sin(th)>0?0:180; }
+  const scale=st===0?0.55+0.35*u:(st===1?0.9+0.1*u:1);
+  craft.setAttribute('transform',`translate(${p[0]},${p[1]}) rotate(${ang}) scale(${scale}${st===3&&Math.sin(u*Math.PI*3)<=0?',1':''})`);
+  D.setAttribute('opacity',inFlight?1:0);
+
+  // trail
+  if(inFlight){ trailPts.push(p); if(trailPts.length>4000) trailPts.shift(); }
+  if(t<0.1) trailPts.length=0;
+  $('trail').setAttribute('d',trailPts.length>1?'M'+trailPts.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' L'):'');
+
+  // orbit ring
+  $('orbit').setAttribute('opacity', st===3? .7 : (st>3&&inFlight? .25 : (st===2? .25*u : 0)));
+
+  // sensor cone
+  let coneOp=0, spread=70, cx=TGT[0];
+  if(st===2){ coneOp=.16*ease(Math.min(1,u*2)); cx=TGT[0]+Math.sin(t*2.2)*120*(1-u); spread=110; }
+  if(st===3){ coneOp=.18; spread=70; }
+  if(st===4){ coneOp=.24; spread=44; }
+  if(st===5){ coneOp=.24*(1-u); spread=30; }
+  $('cone').setAttribute('opacity',inFlight?coneOp:0);
+  $('cone').setAttribute('points',`${p[0]},${p[1]+6} ${cx-spread},${TGT[1]+14} ${cx+spread},${TGT[1]+14}`);
+
+  // target box + readouts
+  const bx=TGT[0], by=TGT[1]-6, bs=st===4?30:38;
+  const brk=`M${bx-bs},${by-bs*0.7+10} v-10 h10 M${bx+bs-10},${by-bs*0.7} h10 v10 M${bx+bs},${by+bs*0.7-10} v10 h-10 M${bx-bs+10},${by+bs*0.7} h-10 v-10`;
+  $('box').innerHTML=`<path d="${brk}"/>`+(st>=4?`<line x1="${bx}" y1="${by-bs}" x2="${bx}" y2="${by+bs}" stroke-width="1"/><line x1="${bx-bs-8}" y1="${by}" x2="${bx+bs+8}" y2="${by}" stroke-width="1"/>`:'');
+  let boxOp=0, lbl='';
+  if(st===2&&u>.45){boxOp=(Math.floor(t*6)%2?1:.35); lbl='GEO 12.97N 77.59E';}
+  if(st===3){boxOp=1; lbl='RECOGNITION';}
+  if(st===4){boxOp=1; lbl=u>.55?'TARGET CONFIRMED':'IDENTIFYING…';}
+  if(st===5){boxOp=1; lbl='ENGAGE';}
+  if(!inFlight) boxOp=0;
+  $('box').setAttribute('opacity',boxOp);
+  const bl=$('boxlbl'); bl.textContent=lbl; bl.setAttribute('x',bx+bs+12); bl.setAttribute('y',by-bs*0.4); bl.setAttribute('opacity',boxOp?1:0);
+
+  // stage label near the aircraft
+  const tag=$('tag');
+  tag.textContent=inFlight?LABELS[st]:'TARGET DESTROYED';
+  const tx=inFlight?(st===3?LO.cx-90:p[0]+(st===4?-200:(st===5?-190:26))):TGT[0]-90, ty=inFlight?(st===3?LO.cy-50:(st===4?p[1]+34:p[1]-(st===5?0:22))):TGT[1]-230;
+  tag.setAttribute('x',tx); tag.setAttribute('y',ty);
+  tag.setAttribute('opacity',inFlight?Math.min(1,u*4,(1-u)*6+ (st===3?1:0)):Math.min(1,(t-FLY)*2));
+
+  // launch smoke puff
+  // impact
+  const b=$('burst');
+  if(!inFlight){
+    const k=(t-FLY)/IMPACT;
+    b.setAttribute('opacity',Math.max(0,1-k*0.9));
+    const f=$('flash'); f.setAttribute('cx',TGT[0]); f.setAttribute('cy',TGT[1]-10); f.setAttribute('r',20+140*Math.sqrt(k));
+    const r=$('ring'); r.setAttribute('cx',TGT[0]); r.setAttribute('cy',TGT[1]); r.setAttribute('r',10+220*k); r.setAttribute('opacity',Math.max(0,1-k*1.6));
+    deb.forEach(o=>{const d=o.v*k*1.6; const x=TGT[0]+Math.cos(o.a)*d, y=TGT[1]-10+Math.sin(o.a)*d+160*k*k;
+      o.l.setAttribute('x1',x);o.l.setAttribute('y1',y);o.l.setAttribute('x2',x-Math.cos(o.a)*8);o.l.setAttribute('y2',y-Math.sin(o.a)*8);});
+    tank.setAttribute('opacity',k<.15?1:0.25);
+  } else { b.setAttribute('opacity',0); tank.setAttribute('opacity',1); }
+
+  // HUD
+  const shown=inFlight?st:5;
+  if(shown!==lastStage){
+    lastStage=shown;
+    $('stnum').textContent=STAGES[shown][0].toUpperCase();
+    $('stname').textContent=STAGES[shown][1].toUpperCase();
+    try{ parent.postMessage({lmStage:shown},'*'); }catch(e){}
+    rows.forEach((r,i)=>{ i===shown?r.setAttribute('data-on',''):r.removeAttribute('data-on'); i<shown?r.setAttribute('data-done',''):r.removeAttribute('data-done'); });
+  }
+  $('clock').textContent='T+'+t.toFixed(1).padStart(4,'0')+' s';
+  $('bar').style.width=(t/DUR*100).toFixed(2)+'%';
+}
+requestAnimationFrame(frame);
+window.__lm={DUR,starts,draw:s=>{trailPts.length=0;for(let q=0;q<=s;q+=1/60)render(q);}};
+</script>
+</body>
+</html>

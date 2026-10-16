@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="viewer-perf.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sub-system animation</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#0d0f11}
+  svg{display:block;width:100%;height:100%}
+  text{font-family:'IBM Plex Mono',ui-monospace,monospace}
+</style>
+</head>
+<body>
+<svg id="s" preserveAspectRatio="xMidYMid meet"></svg>
+<script>
+const NS='http://www.w3.org/2000/svg', S=document.getElementById('s');
+const ACC=(window.ACCENT||'#ff6a2b'), INK='#e8eaed', LINE='#c9ced4', DIM='#7b838c', GRID='#2a2f35';
+const el=(tag,a,p=S)=>{const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;};
+const txt=(x,y,s,a={},p=S)=>{const t=el('text',Object.assign({x,y,fill:DIM,'font-size':11,'letter-spacing':1.5},a),p);t.textContent=s;return t;};
+const cl=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const ease=u=>u*u*(3-2*u);
+const DRONE=`<path d="M-26 0 Q-20 -5 4 -5 L20 -3 Q27 0 20 3 L4 5 Q-20 5 -26 0Z" fill="#d6dade" stroke="#6d747c" stroke-width="1"/>
+<path d="M14 -3 L4 -24 L-1 -24 L6 -3Z" fill="#c2c7cc" stroke="#6d747c" stroke-width=".8"/>
+<path d="M-10 -3 L-20 -22 L-25 -22 L-18 -3Z" fill="#b3b9bf" stroke="#6d747c" stroke-width=".8"/>
+<circle cx="21" cy="0" r="2.6" fill="#8fc4e4"/><line x1="-27" y1="-7" x2="-27" y2="7" stroke="#9aa0a8" stroke-width="1.6"/>`;
+const drone=(p=S)=>{const g=el('g',{},p);g.innerHTML=DRONE;return g;};
+const mode=new URLSearchParams(location.search).get('v')||'launcher';
+let render=()=>{}, DUR=10;
+
+/* ---------------- LAUNCHER: pneumatic tube, catapult launch ---------------- */
+if(mode==='launcher'){
+  S.setAttribute('viewBox','0 0 640 380'); DUR=10;
+  for(let x=0;x<=640;x+=40)el('line',{x1:x,y1:0,x2:x,y2:380,stroke:GRID,'stroke-width':.5,opacity:.5});
+  el('rect',{x:24,y:318,width:300,height:10,fill:'#1d2126',stroke:'#4a525b'});
+  txt(110,350,'TAKE-OFF SITE');
+  const ang=-22*Math.PI/180, BASE=[70,304], LEN=120;
+  const MUZ=[BASE[0]+Math.cos(ang)*LEN, BASE[1]+Math.sin(ang)*LEN];
+  // bipod + tube
+  el('line',{x1:BASE[0]+70,y1:BASE[1]-26,x2:BASE[0]+88,y2:318,stroke:'#3a3f45','stroke-width':3});
+  el('line',{x1:BASE[0]+70,y1:BASE[1]-26,x2:BASE[0]+62,y2:318,stroke:'#3a3f45','stroke-width':3});
+  const tubeG=el('g',{transform:`translate(${BASE}) rotate(-22)`});
+  el('rect',{x:-8,y:-11,width:LEN+8,height:22,rx:3,fill:'#4b3f30',stroke:'#1a1612','stroke-width':1.5},tubeG);
+  const piston=el('rect',{x:-4,y:-8,width:10,height:16,fill:'#8a8f96'},tubeG);
+  el('rect',{x:LEN-4,y:-13,width:8,height:26,rx:2,fill:'#2b251c'},tubeG);
+  // pressure gauge
+  txt(28,262,'PRESSURE',{'font-size':10});
+  el('rect',{x:28,y:268,width:80,height:6,fill:'#1d2126',stroke:'#3a3f45'});
+  const pbar=el('rect',{x:28,y:268,width:0,height:6,fill:ACC});
+  // climb path
+  const END=[560,96];
+  const climb=el('path',{d:`M${MUZ} L${END}`,fill:'none',stroke:'#6fa2ff','stroke-width':2,'stroke-dasharray':'6 5'});
+  const CL=Math.hypot(END[0]-MUZ[0],END[1]-MUZ[1]);
+  const mask=el('path',{d:`M${MUZ} L${END}`,fill:'none',stroke:'#0d0f11','stroke-width':4,'stroke-dasharray':`${CL} ${CL}`});
+  // dimensions
+  const dimD=el('g',{opacity:0});
+  el('line',{x1:MUZ[0],y1:54,x2:END[0],y2:54,stroke:LINE,'stroke-width':1},dimD);
+  el('path',{d:`M${MUZ[0]+8},49 L${MUZ[0]},54 L${MUZ[0]+8},59 M${END[0]-8},49 L${END[0]},54 L${END[0]-8},59`,fill:'none',stroke:LINE},dimD);
+  txt((MUZ[0]+END[0])/2-62,44,'DEPARTURE DISTANCE',{fill:INK},dimD);
+  const dimA=el('g',{opacity:0});
+  el('line',{x1:600,y1:END[1],x2:600,y2:318,stroke:LINE,'stroke-width':1},dimA);
+  el('path',{d:`M595,${END[1]+8} L600,${END[1]} L605,${END[1]+8} M595,310 L600,318 L605,310`,fill:'none',stroke:LINE},dimA);
+  const at=txt(612,220,'DEPARTURE ALTITUDE',{fill:INK,transform:'rotate(-90 612 220)'},dimA);
+  const d=drone(); d.setAttribute('opacity',0);
+  // mode chip + steps
+  const chip=el('rect',{x:380,y:300,width:116,height:26,fill:'none',stroke:DIM});
+  const chipT=txt(392,318,'AP · MANUAL',{fill:INK,'font-size':12});
+  const step=txt(380,352,'',{fill:ACC,'font-size':11});
+  const spd=txt(MUZ[0]+10,MUZ[1]+30,'',{fill:INK,'font-size':11});
+  const STEPS=['1  AP IN MANUAL MODE','2  OPERATOR COMMANDS TAKE-OFF','3  100% THROTTLE · CATAPULT FIRE','4  TAKE-OFF HEADING HELD','AP SWITCHES TO AUTO'];
+  render=t=>{
+    const tl=[1.3,1.6,.45,4.2,2.45]; let s=0,acc=0; while(s<4&&t>acc+tl[s]){acc+=tl[s];s++;} const u=cl((t-acc)/tl[s]);
+    step.textContent=STEPS[s];
+    pbar.setAttribute('width', s===1?80*ease(u):(s===0?0:(s===2?80*(1-u):0)));
+    const auto=s===4; chip.setAttribute('stroke',auto?ACC:DIM); chipT.textContent=auto?'AP · AUTO':'AP · MANUAL'; chipT.setAttribute('fill',auto?ACC:INK);
+    let p,a=-22,sc=1,op=1;
+    if(s<2){p=[BASE[0]+Math.cos(ang)*20,BASE[1]+Math.sin(ang)*20]; sc=.8;}
+    else if(s===2){const k=u*u; p=[BASE[0]+Math.cos(ang)*(20+k*(LEN-20)),BASE[1]+Math.sin(ang)*(20+k*(LEN-20))]; sc=.8+.2*u;}
+    else if(s===3){const k=1-(1-u)*(1-u)*.2-.8*(1-u); p=[MUZ[0]+(END[0]-MUZ[0])*cl(k*1.0),MUZ[1]+(END[1]-MUZ[1])*cl(k)]; a=Math.atan2(END[1]-MUZ[1],END[0]-MUZ[0])*180/Math.PI;}
+    else {p=[END[0]+u*30,END[1]-u*4]; a=-6; op=1-cl((u-.6)/.4);}
+    piston.setAttribute('x', s===2?-4+u*(LEN-14):(s>2?LEN-14:-4));
+    d.setAttribute('transform',`translate(${p}) rotate(${a}) scale(${sc})`); d.setAttribute('opacity',op);
+    const prog=s<3?0:(s===3?Math.hypot(p[0]-MUZ[0],p[1]-MUZ[1]):CL);
+    mask.setAttribute('stroke-dashoffset',-prog);
+    climb.setAttribute('opacity',s>=3?1:0);
+    spd.textContent=s===2?`${Math.round(26*u)} m/s`:(s===3&&u<.35?'26 m/s':'');
+    dimD.setAttribute('opacity',s===4?cl(u*3):(s===3?cl((u-.7)*4):0));
+    dimA.setAttribute('opacity',s===4?cl(u*3-.4):0);
+  };
+}
+
+/* ---------------- AUTONOMOUS: vision-based detection & geo-location ---------------- */
+if(mode==='auto'){
+  S.setAttribute('viewBox','0 0 640 380'); DUR=11;
+  // ground plane + road
+  el('path',{d:'M16 362 L292 358 L336 200 L116 204Z',fill:'#15181c',stroke:LINE,'stroke-width':1.2});
+  const roadA='M84 360 C150 290 230 238 330 216', roadB='M130 360 C180 300 250 252 333 226';
+  el('path',{d:roadA,fill:'none',stroke:LINE,'stroke-width':1.2});
+  el('path',{d:roadB,fill:'none',stroke:LINE,'stroke-width':1.2});
+  const mid=el('path',{d:'M107 360 C165 295 240 245 331 221',fill:'none',stroke:'none'});
+  const ML=mid.getTotalLength();
+  // world axes
+  const O=[118,176];
+  el('path',{d:`M${O} L${O[0]} 96 M${O} L${O[0]+84} ${O[1]} M${O} L${O[0]+46} ${O[1]-34}`,stroke:LINE,fill:'none','stroke-width':1.2});
+  txt(O[0]-6,88,'zw',{fill:INK,'font-size':13}); txt(O[0]+90,O[1]+4,'xw',{fill:INK,'font-size':13}); txt(O[0]+50,O[1]-38,'yw',{fill:INK,'font-size':13});
+  // aircraft + gimbal
+  const AC=[330,66];
+  const ac=drone(); ac.setAttribute('transform',`translate(${AC}) scale(-1.7,1.7)`);
+  const gim=el('g',{},S);
+  el('rect',{x:-6,y:0,width:12,height:9,fill:'#8a8f96'},gim);
+  const lens=el('circle',{cx:0,cy:12,r:4.5,fill:'#1a1d21',stroke:'#8fc4e4','stroke-width':1.4},gim);
+  gim.setAttribute('transform',`translate(${AC[0]+4},${AC[1]+8})`);
+  const G=[AC[0]+4,AC[1]+20];
+  const cone=el('polygon',{fill:'#8fc4e4',opacity:.12});
+  const ray=el('line',{stroke:ACC,'stroke-width':1.4,'stroke-dasharray':'4 4'});
+  const laser=el('circle',{r:3,fill:ACC});
+  // truck (world)
+  const truck=el('g',{});
+  el('rect',{x:-14,y:-9,width:20,height:10,fill:'#3a3f45',stroke:LINE},truck);
+  el('rect',{x:6,y:-6,width:8,height:7,fill:'#3a3f45',stroke:LINE},truck);
+  // image plane
+  el('path',{d:'M440 104 L624 98 L628 330 L446 340Z',fill:'#111418',stroke:LINE,'stroke-width':1.2});
+  txt(470,92,'IMAGE PLANE',{'font-size':10});
+  el('path',{d:'M446 180 C520 196 580 250 588 330',fill:'none',stroke:LINE});
+  el('path',{d:'M446 206 C510 222 548 270 552 334',fill:'none',stroke:LINE});
+  el('path',{d:`M${G} C${G[0]-4},170 380,176 444,190`,fill:'none',stroke:DIM,'stroke-width':1});
+  el('path',{d:`M${G} C${G[0]-10},210 390,214 444,226`,fill:'none',stroke:DIM,'stroke-width':1});
+  const imPath=el('path',{d:'M450 192 C518 208 566 258 570 332',fill:'none',stroke:'none'}); const IL=imPath.getTotalLength();
+  const imTruck=el('g',{});
+  el('rect',{x:-18,y:-14,width:28,height:18,fill:'#3a3f45',stroke:LINE},imTruck);
+  el('rect',{x:10,y:-9,width:10,height:13,fill:'#3a3f45',stroke:LINE},imTruck);
+  const box=el('path',{fill:'none',stroke:ACC,'stroke-width':2});
+  const boxT=txt(0,0,'',{fill:ACC,'font-size':10});
+  el('path',{d:'M452 350 L452 300 M452 350 L512 348 M452 350 L440 364',stroke:LINE,fill:'none'});
+  txt(426,300,'yim',{fill:INK,'font-size':12}); txt(516,352,'xim',{fill:INK,'font-size':12}); txt(418,376,'zim',{fill:INK,'font-size':12});
+  const state=txt(20,30,'',{fill:ACC,'font-size':12,'letter-spacing':2});
+  const geo=txt(20,50,'',{fill:INK,'font-size':11});
+  const PH=['DETECTION','RECOGNITION','IDENTIFICATION','TRACKING · GEO-LOCATION'];
+  render=t=>{
+    const u=t/DUR, k=.08+.84*u;
+    const wp=mid.getPointAtLength(k*ML), wp2=mid.getPointAtLength(Math.min(ML,k*ML+2));
+    const wa=Math.atan2(wp2.y-wp.y,wp2.x-wp.x)*180/Math.PI;
+    const sc=.7+.5*(wp.y-200)/160;
+    truck.setAttribute('transform',`translate(${wp.x},${wp.y}) rotate(${wa}) scale(${sc})`);
+    cone.setAttribute('points',`${G} ${wp.x-40},${wp.y+14} ${wp.x+40},${wp.y-10}`);
+    ray.setAttribute('x1',G[0]);ray.setAttribute('y1',G[1]);ray.setAttribute('x2',wp.x);ray.setAttribute('y2',wp.y-4);
+    const ph=Math.min(3,Math.floor(u*4.4));
+    laser.setAttribute('cx',wp.x); laser.setAttribute('cy',wp.y-4); laser.setAttribute('opacity',ph>=2?(Math.floor(t*8)%2?1:.4):0);
+    ray.setAttribute('opacity',ph>=2?1:.35);
+    lens.setAttribute('transform',`rotate(${(wp.x-G[0])*.1})`);
+    const ip=imPath.getPointAtLength((.1+.8*u)*IL);
+    imTruck.setAttribute('transform',`translate(${ip.x},${ip.y}) rotate(${22+u*40})`);
+    const b=ph===0?30:24, x=ip.x, y=ip.y-4;
+    box.setAttribute('d',`M${x-b},${y-b+8} v-8 h8 M${x+b-8},${y-b} h8 v8 M${x+b},${y+b-8} v8 h-8 M${x-b+8},${y+b} h-8 v-8`+(ph>=2?` M${x-b-6},${y} h${2*b+12} M${x},${y-b-6} v${2*b+12}`:''));
+    box.setAttribute('opacity',ph===0?(Math.floor(t*5)%2?1:.3):1);
+    boxT.textContent=['DETECT','RECOGNISE','IDENTIFY','TRACK'][ph]; boxT.setAttribute('x',x-b); boxT.setAttribute('y',y-b-6);
+    state.textContent=PH[ph];
+    geo.textContent=ph===3?`GEO ${(12.9716+u*.004).toFixed(4)}N  ${(77.5946+u*.006).toFixed(4)}E`:'';
+  };
+}
+
+/* ---------------- GCS: joystick · modem · datalink · software ---------------- */
+if(mode==='gcs'){
+  S.setAttribute('viewBox','0 0 640 360'); DUR=8;
+  // cables
+  const c1=el('path',{d:'M110 214 C150 290 200 300 238 290',fill:'none',stroke:'#3d6fb8','stroke-width':2.4});
+  const c2=el('path',{d:'M290 166 L290 262',fill:'none',stroke:'#3d6fb8','stroke-width':2.4});
+  const c3=el('path',{d:'M342 290 C390 296 410 270 424 250',fill:'none',stroke:'#3d6fb8','stroke-width':2.4});
+  // joystick
+  const J=el('g',{transform:'translate(88,236) rotate(-14)'});
+  el('rect',{x:-58,y:-34,width:116,height:74,rx:16,fill:'#d6dade',stroke:'#6d747c'},J);
+  el('rect',{x:-30,y:-22,width:60,height:26,rx:3,fill:'#1a1d21'},J);
+  const s1=el('line',{x1:-34,y1:14,x2:-34,y2:-4,stroke:'#2a2f35','stroke-width':5,'stroke-linecap':'round'},J);
+  const s2=el('line',{x1:34,y1:14,x2:34,y2:-4,stroke:'#2a2f35','stroke-width':5,'stroke-linecap':'round'},J);
+  el('circle',{cx:-34,cy:14,r:9,fill:'none',stroke:'#6d747c'},J); el('circle',{cx:34,cy:14,r:9,fill:'none',stroke:'#6d747c'},J);
+  el('line',{x1:-40,y1:-34,x2:-46,y2:-60,stroke:'#6d747c','stroke-width':2.5},J);
+  txt(40,338,'JOYSTICK',{fill:INK});
+  // modem
+  el('rect',{x:238,y:262,width:104,height:46,rx:4,fill:'#1a1d21',stroke:'#4a525b'});
+  const led=el('circle',{cx:328,cy:285,r:3,fill:ACC});
+  txt(228,334,'GCS MODEM',{fill:INK});
+  // datalink
+  el('rect',{x:264,y:130,width:52,height:36,rx:5,fill:'#26306e',stroke:'#4a5aa8'});
+  el('line',{x1:306,y1:130,x2:306,y2:108,stroke:'#8a8f96','stroke-width':2});
+  txt(184,152,'DATALINK',{fill:INK});
+  const waves=[0,1,2].map(i=>el('path',{fill:'none',stroke:'#4fa3ff','stroke-width':3,'stroke-linecap':'round'}));
+  // air vehicle
+  const dr=drone(); 
+  // laptop
+  el('path',{d:'M424 250 L620 250 L636 268 L408 268Z',fill:'#2a2f35',stroke:'#4a525b'});
+  el('rect',{x:432,y:124,width:180,height:124,rx:5,fill:'#15181c',stroke:'#4a525b'});
+  const scr=el('g',{});
+  el('rect',{x:440,y:132,width:164,height:108,fill:'#1d2a24'},scr);
+  el('path',{d:'M440 190 C470 170 500 204 530 180 C560 158 580 186 604 170 L604 240 L440 240Z',fill:'#233a4a'},scr);
+  for(let x=460;x<604;x+=24)el('line',{x1:x,y1:132,x2:x,y2:240,stroke:'#fff',opacity:.06},scr);
+  for(let y=150;y<240;y+=22)el('line',{x1:440,y1:y,x2:604,y2:y,stroke:'#fff',opacity:.06},scr);
+  el('ellipse',{cx:520,cy:180,rx:34,ry:18,fill:'none',stroke:ACC,'stroke-width':1,'stroke-dasharray':'3 3'},scr);
+  const icon=el('path',{d:'M0 -5 L4 4 L0 2 L-4 4Z',fill:ACC},scr);
+  const vid=el('rect',{x:548,y:136,width:52,height:34,fill:'#0d0f11',stroke:'#4a525b'},scr);
+  const vbox=el('rect',{width:12,height:9,fill:'none',stroke:ACC,'stroke-width':1.2},scr);
+  const tel=txt(446,234,'',{fill:INK,'font-size':8},scr);
+  txt(452,108,'GCS SOFTWARE',{fill:INK});
+  const pk=[c1,c2,c3].map(()=>[0,1,2].map(()=>el('circle',{r:3.2,fill:ACC})));
+  const L=[c1,c2,c3].map(c=>c.getTotalLength());
+  render=t=>{
+    const u=t/DUR;
+    s1.setAttribute('x2',-34+Math.sin(t*2.1)*9); s1.setAttribute('y2',-4+Math.cos(t*1.7)*3);
+    s2.setAttribute('x2',34+Math.sin(t*1.3+1)*7); s2.setAttribute('y2',-4+Math.cos(t*2.4)*4);
+    [c1,c2,c3].forEach((c,i)=>pk[i].forEach((p,j)=>{
+      let f=((t*0.55+j/3+i*.17)%1); if(i===1) f=1-f; // datalink → modem is downlink
+      const q=c.getPointAtLength(f*L[i]); p.setAttribute('cx',q.x); p.setAttribute('cy',q.y);
+    }));
+    led.setAttribute('opacity',Math.floor(t*6)%2?1:.25);
+    waves.forEach((w,i)=>{const r=14+i*12, a0=-1.25, a1=-0.25, cx=306, cy=106;
+      w.setAttribute('d',`M${cx+r*Math.cos(a0-.9)},${cy+r*Math.sin(a0-.9)} A${r} ${r} 0 0 1 ${cx+r*Math.cos(a1)},${cy+r*Math.sin(a1)}`);
+      w.setAttribute('opacity',.25+.75*((Math.sin(t*4-i*1.1)+1)/2));});
+    dr.setAttribute('transform',`translate(${470+Math.sin(u*Math.PI*2)*70},${44+Math.cos(u*Math.PI*2)*10}) scale(${Math.cos(u*Math.PI*2)>0?-.8:.8},.8)`);
+    const th=u*Math.PI*2, ix=520+34*Math.cos(th), iy=180+18*Math.sin(th);
+    icon.setAttribute('transform',`translate(${ix},${iy}) rotate(${th*180/Math.PI+180})`);
+    vbox.setAttribute('x',566+Math.sin(t*1.5)*6); vbox.setAttribute('y',148+Math.cos(t*1.1)*3);
+    tel.textContent=`ALT ${(420+Math.sin(th)*12).toFixed(0)} m · 26 m/s · LINK OK`;
+  };
+}
+
+/* ---------------- PROPULSION: pusher motor with folding propeller ---------------- */
+if(mode==='prop'){
+  S.setAttribute('viewBox','0 0 640 360'); DUR=10;
+  const CY=178, HUB=[448,CY], L=150;
+  const flow=[...Array(9)].map((_,i)=>el('line',{y1:CY-120+i*30,y2:CY-120+i*30,stroke:'#8fc4e4','stroke-width':1.4,'stroke-linecap':'round',opacity:0}));
+  // V-tail fins
+  el('path',{d:`M250 ${CY-40} L312 ${CY-128} L344 ${CY-128} L330 ${CY-34}Z`,fill:'#b3b9bf',stroke:'#6d747c'});
+  // aft fuselage (cut at left edge)
+  el('path',{d:`M-10 ${CY-54} C120 ${CY-54} 300 ${CY-40} 382 ${CY-20} L382 ${CY+20} C300 ${CY+40} 120 ${CY+58} -10 ${CY+58}Z`,fill:'#d6dade',stroke:'#6d747c','stroke-width':1.2});
+  el('path',{d:`M60 ${CY-54} L60 ${CY+58}`,stroke:'#9aa0a8','stroke-width':1,'stroke-dasharray':'3 4'});
+  el('path',{d:`M262 ${CY+44} L318 ${CY+120} L346 ${CY+120} L332 ${CY+30}Z`,fill:'#a9afb5',stroke:'#6d747c'});
+  // motor can
+  el('rect',{x:382,y:CY-19,width:54,height:38,rx:3,fill:'#3a3f45',stroke:'#1a1d21'});
+  for(let x=390;x<432;x+=7)el('line',{x1:x,y1:CY-19,x2:x,y2:CY+19,stroke:'#555c64','stroke-width':1.4});
+  el('rect',{x:376,y:CY-22,width:8,height:44,fill:'#2a2f35'});
+  const blades=[0,1].map(()=>el('path',{fill:'#2b2f34',stroke:'#0d0f11','stroke-width':1}));
+  const disc=el('ellipse',{cx:HUB[0]+2,cy:CY,rx:7,ry:L,fill:'#8fc4e4',opacity:0});
+  // hub + spinner
+  el('rect',{x:436,y:CY-12,width:14,height:24,fill:'#8a8f96',stroke:'#4a525b'});
+  el('path',{d:`M450 ${CY-12} Q478 ${CY-6} 482 ${CY} Q478 ${CY+6} 450 ${CY+12}Z`,fill:'#c9ced4',stroke:'#6d747c'});
+  const pins=[el('circle',{r:2.6,fill:ACC}),el('circle',{r:2.6,fill:ACC})];
+  // readouts
+  const st=txt(24,34,'',{fill:ACC,'font-size':12,'letter-spacing':2});
+  const rpm=txt(24,54,'',{fill:INK,'font-size':11});
+  txt(386,CY+46,'MOTOR',{'font-size':10}); txt(430,CY-30,'HINGE',{'font-size':10,fill:ACC});
+  txt(24,340,'PUSHER · FOLDING PROPELLER',{'font-size':10});
+  const tl=[1.6,1.4,4,1.4,1.6];
+  const speed=t=>{let a=0,i=0;while(i<4&&t>a+tl[i]){a+=tl[i];i++;}const u=cl((t-a)/tl[i]);return [i,u,[0,ease(u),1,1-ease(u),0][i]];};
+  render=t=>{
+    const [i,u,s]=speed(t);
+    let phi=0; for(let q=0;q<t;q+=1/120) phi+=speed(q)[2]*2.3*Math.PI*2/120;
+    const fold=(i===1?ease(u):i===2?1:i===3?1-ease(cl(u*1.3)):0)*Math.PI/2;
+    blades.forEach((b,k)=>{
+      const c=Math.cos(phi+k*Math.PI), off=(k?1:-1)*6*Math.cos(fold);
+      const hx=HUB[0], hy=CY+(fold<.05?off:c*6);
+      const dx=Math.cos(fold), dy=Math.sin(fold)*c*(fold<.05?0:1);
+      const tipx=hx+L*dx, tipy=hy+L*dy+(fold<.05?off*.2:0);
+      const nx=-dy, ny=dx, w0=9, w1=3.5;
+      b.setAttribute('d',`M${hx+nx*w0},${hy+ny*w0} Q${hx+L*.5*dx+nx*12},${hy+L*.5*dy+ny*12} ${tipx+nx*w1},${tipy+ny*w1} L${tipx-nx*w1},${tipy-ny*w1} Q${hx+L*.5*dx-nx*4},${hy+L*.5*dy-ny*4} ${hx-nx*w0*.4},${hy-ny*w0*.4}Z`);
+      b.setAttribute('opacity',1-.72*s*s);
+      pins[k].setAttribute('cx',hx); pins[k].setAttribute('cy',hy);
+    });
+    disc.setAttribute('opacity',.22*s*s*(i===2||i===3?1:.6)); disc.setAttribute('ry',L*Math.sin(fold));
+    flow.forEach((f,k)=>{const r=((t*2.2+k*.37)%1); const x=500+r*150; f.setAttribute('x1',x); f.setAttribute('x2',x+30); f.setAttribute('opacity',s*.5*(1-r));});
+    st.textContent=['MOTOR OFF · BLADES FOLDED AFT','MOTOR ON · BLADES DEPLOY','CRUISE · PUSHER THRUST','MOTOR OFF · BLADES FOLD BACK','FOLDED · LOW DRAG / TUBE STOWAGE'][i];
+    rpm.textContent=`${Math.round(s*6800)} RPM`;
+  };
+}
+
+let t0=performance.now(), vis=true;
+new IntersectionObserver(e=>vis=e[0].isIntersecting).observe(S);
+const loop=now=>{ if(vis) render(((now-t0)/1000)%DUR); requestAnimationFrame(loop); };
+render(0.01); requestAnimationFrame(loop);
+window.__sub={draw:t=>render(t%DUR),DUR};
+</script>
+</body>
+</html>
