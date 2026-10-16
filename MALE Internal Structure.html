@@ -20,11 +20,11 @@
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500&display=swap" rel="stylesheet">
 <style>
-  html,body{height:100%;margin:0;background:#0d0f11;overflow:hidden}
+  html,body{height:100%;margin:0;background:linear-gradient(#34335f 0%,#3e3d6c 58%,#8d8cab 100%);overflow:hidden}
   #view{position:absolute;inset:0}
   #view canvas{display:block;width:100%;height:100%;touch-action:none}
   .lb{position:absolute;font:500 13px/1.2 "Space Grotesk",Helvetica,Arial,sans-serif;color:#e8e6e2;white-space:nowrap;transform:translate(-50%,-50%)}
-  #hint{position:absolute;left:16px;bottom:14px;font:11px/1 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.18em;text-transform:uppercase;color:#6c757e;pointer-events:none}
+  #hint{position:absolute;left:16px;bottom:14px;font:11px/1 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.18em;text-transform:uppercase;color:#1e1d3c;pointer-events:none}
 </style>
 </head>
 <body>
@@ -37,7 +37,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const host = document.getElementById('view');
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -46,7 +46,6 @@ renderer.toneMappingExposure = 0.9;
 renderer.localClippingEnabled = true;
 host.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0d0f11);
 const camera = new THREE.PerspectiveCamera(26, 1, 0.05, 60);
 
 scene.add(new THREE.HemisphereLight(0xdfe8f2, 0x27313a, 1.2));

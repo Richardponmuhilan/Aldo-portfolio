@@ -20,7 +20,7 @@
 </script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  html,body{height:100%;margin:0;background:#0d0f11;overflow:hidden;font-family:'IBM Plex Mono',ui-monospace,monospace}
+  html,body{height:100%;margin:0;background:linear-gradient(#34335f 0%,#3e3d6c 58%,#8d8cab 100%);overflow:hidden;font-family:'IBM Plex Mono',ui-monospace,monospace}
   #view{position:absolute;inset:0}
   #view canvas{display:block;width:100%;height:100%;touch-action:none}
 </style>
@@ -32,12 +32,12 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const host = document.getElementById('view');
-const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.25;
 host.appendChild(renderer.domElement);
-const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0d0f11);
+const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
 
 const M = (c, r = .6, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });

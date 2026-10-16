@@ -20,7 +20,7 @@
 </script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  html,body{height:100%;margin:0;background:#e2e2e2;overflow:hidden;font-family:'IBM Plex Mono',ui-monospace,monospace}
+  html,body{height:100%;margin:0;background:linear-gradient(#34335f 0%,#3e3d6c 58%,#8d8cab 100%);overflow:hidden;font-family:'IBM Plex Mono',ui-monospace,monospace}
   #view{position:absolute;inset:0}
   #view canvas{display:block;width:100%;height:100%;touch-action:none}
   #hud{position:absolute;left:18px;top:16px;pointer-events:none}
@@ -29,7 +29,7 @@
   #modes{position:absolute;right:14px;bottom:14px;display:flex;gap:6px}
   #modes button{font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;padding:8px 12px;border:1px solid #b9bcc2;background:rgba(255,255,255,.7);color:#33373d;cursor:pointer;white-space:nowrap}
   #modes button.on{background:#1b1d21;color:#fff;border-color:#1b1d21}
-  #hint{position:absolute;left:18px;bottom:18px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#8a8f96;pointer-events:none}
+  #hint{position:absolute;left:18px;bottom:18px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#1e1d3c;pointer-events:none}
   .lb{position:absolute;font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#1b1d21;background:rgba(255,255,255,.82);border:1px solid #c7cacf;padding:5px 7px;white-space:nowrap;transform:translate(-50%,-140%);transition:opacity .4s;pointer-events:none}
 </style>
 </head>
@@ -49,7 +49,7 @@ renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.0;
 host.appendChild(renderer.domElement);
-const scene=new THREE.Scene();scene.background=new THREE.Color(0xe2e2e2);
+const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(28,1,.05,60);
 camera.position.set(1.55,1.7,2.55);
 const controls=new OrbitControls(camera,renderer.domElement);

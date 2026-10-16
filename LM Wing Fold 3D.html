@@ -19,11 +19,11 @@
 }
 </script>
 <style>
-  html,body{height:100%;margin:0;background:#0d0f11;overflow:hidden}
+  html,body{height:100%;margin:0;background:linear-gradient(#34335f 0%,#3e3d6c 58%,#8d8cab 100%);overflow:hidden}
   #view{position:absolute;inset:0}
   #view canvas{display:block;width:100%;height:100%;touch-action:none}
   .lbl{position:absolute;font:11px/1 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.18em;text-transform:uppercase;pointer-events:none;user-select:none}
-  #hint{left:16px;bottom:14px;color:#6c757e}
+  #hint{left:16px;bottom:14px;color:#1e1d3c}
   #state{left:16px;top:16px;color:#e8eaed;display:flex;gap:10px;align-items:center}
   #bar{width:64px;height:2px;background:#2a2e33;position:relative}
   #bar i{position:absolute;left:0;top:0;bottom:0;background:var(--accent,#ff8a3d)}
@@ -133,7 +133,7 @@ root.position.sub(centre);
 const radius = box.getSize(new THREE.Vector3()).length() * 0.5;
 
 const host = document.getElementById('view');
-const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -142,7 +142,6 @@ renderer.toneMappingExposure = 1.05;
 host.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0d0f11);
 scene.add(root);
 scene.add(new THREE.HemisphereLight(0xcfe0f0, 0x27313a, 1.15));
 const key = new THREE.DirectionalLight(0xffffff, 2.1);
