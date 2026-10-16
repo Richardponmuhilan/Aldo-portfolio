@@ -37,7 +37,7 @@ renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.25;
 host.appendChild(renderer.domElement);
-const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0d0f11).lerp(new THREE.Color(window.ACCENT || 0x0d0f11), .05);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0d0f11);
 const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
 
 const M = (c, r = .6, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });

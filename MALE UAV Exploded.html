@@ -46,7 +46,7 @@ renderer.toneMappingExposure = 0.85;
 host.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0d0f11).lerp(new THREE.Color(window.ACCENT || 0x0d0f11), .05);
+scene.background = new THREE.Color(0x0d0f11);
 
 const camera = new THREE.PerspectiveCamera(32, 1, 0.05, 60);
 

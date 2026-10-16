@@ -7,20 +7,32 @@
 <meta name="description" content="Aldo Arun designs aircraft structures and UAVs, from first sketch to flying prototype. Counter-UAS, MALE UAV, loitering munition, amphibious and VTOL projects.">
 <meta property="og:title" content="Aldo Arun, aerospace engineer">
 <meta property="og:description" content="Aircraft structures and UAV design, from first sketch to flying prototype.">
-<meta name="theme-color" content="#D4D8DC">
+<meta name="theme-color" content="#F8C61E">
+<script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('motion');</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
 <style>
 :root{
-  --alu:#D4D8DC;
-  --sheet:#F1F2F3;
-  --ink:#1C1F23;
-  --ink-2:#4A5058;
-  --line:#8C939A;
-  --chromate:#B0B640;
-  --chromate-ink:#4E5615;
-  --viewport:#14171A;
+  /* palette: sunburst on midnight, with shades of midnight for structure */
+  --sun:#F8C61E;
+  --midnight:#252C37;
+  --night:#1C222B;
+  --rule:#3A4350;
+  --dusk:#949CA8;
+  --pale:#E3E5E8;
+
+  /* roles: dark by default, .daylight flips them for the hero */
+  --sheet:var(--midnight);
+  --ink:var(--pale);
+  --ink-2:var(--dusk);
+  --line:var(--rule);
+  --edge:var(--rule);
+  --frame:var(--midnight);
+  --accent:var(--sun);
+  --viewport:var(--night);
+
+  --ease:cubic-bezier(.65,0,.3,1);
 
   /* type scale, ratio 1.25 from 18px */
   --t-sm:.8125rem;  /* 13 */
@@ -34,32 +46,46 @@
   --gutter:clamp(16px,4vw,56px);
   --sheet-pad:clamp(20px,3.6vw,64px);
   --max:1480px;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:72px;-webkit-text-size-adjust:100%}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-body{margin:0;background:var(--alu);color:var(--ink);font-family:Archivo,system-ui,sans-serif;font-size:var(--t-body);line-height:1.55;font-stretch:100%;font-kerning:normal;overflow-x:hidden}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+body{margin:0;background:var(--night);color:var(--ink);font-family:Archivo,system-ui,sans-serif;font-size:var(--t-body);line-height:1.55;font-stretch:100%;font-kerning:normal;overflow-x:hidden}
+::selection{background:var(--sun);color:var(--midnight)}
 img,svg,iframe{display:block;max-width:100%}
-a{color:var(--chromate-ink);text-decoration-thickness:1px;text-underline-offset:.2em}
-a:hover{color:var(--ink)}
-:focus-visible{outline:2px solid var(--chromate-ink);outline-offset:3px}
+a{color:var(--ink);text-decoration-color:var(--line);text-decoration-thickness:1px;text-underline-offset:.2em;transition:color .25s,text-decoration-color .25s}
+a:hover{text-decoration-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 p,ul,ol,dl,h1,h2,h3,figure{margin:0}
 @media (max-width:560px){:root{--t-lead:1.1875rem}}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gutter)}
 .skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:var(--sheet);padding:8px 12px;z-index:20}
 .skip:focus{left:8px}
 
-/* ---------- top bar ---------- */
-.bar{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--alu) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid color-mix(in srgb,var(--ink) 14%,transparent)}
-.bar .wrap{display:flex;align-items:center;gap:24px;min-height:56px}
-.bar-name{font-weight:800;font-stretch:125%;font-size:1rem;letter-spacing:-.01em;color:var(--ink);text-decoration:none}
+/* ---------- daylight: the hero zone, a sunburst sheet with a hard edge into the dark page ---------- */
+.daylight{
+  --sheet:var(--sun);--ink:var(--midnight);--ink-2:color-mix(in srgb,var(--midnight) 80%,var(--sun));--line:color-mix(in srgb,var(--midnight) 55%,var(--sun));--edge:var(--midnight);--frame:var(--midnight);--accent:var(--midnight);
+  color-scheme:light;color:var(--ink);display:flow-root;background:var(--sun);
+}
+
+/* ---------- top bar: sunburst over the hero, midnight once past it ---------- */
+.bar{--ink:var(--midnight);--ink-2:color-mix(in srgb,var(--midnight) 80%,var(--sun));--accent:var(--midnight);position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--sun) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid color-mix(in srgb,var(--midnight) 18%,transparent);transition:background-color .5s var(--ease),border-color .5s var(--ease)}
+.bar.night{--ink:var(--pale);--ink-2:var(--dusk);--accent:var(--sun);background:color-mix(in srgb,var(--night) 90%,transparent);border-bottom-color:var(--rule)}
+.bar .wrap{position:relative;display:flex;align-items:center;gap:24px;min-height:56px}
+.bar-name{font-weight:800;font-stretch:125%;font-size:1rem;letter-spacing:-.01em;color:var(--ink);text-decoration:none;transition:color .5s var(--ease)}
 .bar nav{margin-left:auto;display:flex;gap:clamp(14px,2.4vw,32px);font-size:var(--t-xs)}
-.bar nav a{color:var(--ink-2);text-decoration:none}
-.bar nav a:hover{color:var(--ink);text-decoration:underline}
+.bar nav a{color:var(--ink-2);text-decoration:none;transition:color .4s var(--ease)}
+.bar nav a:hover,.bar nav a[aria-current]{color:var(--ink)}
+.bar .mark{position:absolute;left:0;bottom:-1px;width:1px;height:2px;background:var(--accent);transform-origin:0 50%;transform:translateX(var(--x,0px)) scaleX(var(--w,0));opacity:0;transition:transform .55s var(--ease),opacity .3s,background-color .5s var(--ease)}
+.bar .mark.on{opacity:1}
 @media (max-width:560px){.bar nav a:not(.keep){display:none}}
 
 /* ---------- sheets ---------- */
-.sheet{background:var(--sheet);border:1.5px solid var(--ink);box-shadow:0 0 0 6px var(--sheet),0 0 0 7px color-mix(in srgb,var(--ink) 55%,transparent);margin:clamp(28px,4vw,56px) 7px;padding:var(--sheet-pad)}
+.sheet{background:var(--sheet);border:1.5px solid var(--edge);box-shadow:0 0 0 6px var(--sheet),0 0 0 7px var(--frame);margin:clamp(28px,4vw,56px) 7px;padding:var(--sheet-pad)}
 @media (max-width:560px){.sheet{box-shadow:none;margin-inline:0}}
 
 /* ---------- hero ---------- */
@@ -81,7 +107,7 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
 .ga .dim path,.ga .note path{fill:none;stroke:var(--ink-2);stroke-width:3}
 .ga .dim .ext{stroke:var(--line)}
 .ga .note circle{fill:var(--ink-2)}
-.ga .wl{fill:none;stroke:var(--chromate-ink);stroke-width:3.5;stroke-dasharray:90 18 14 18}
+.ga .wl{fill:none;stroke:var(--ink-2);stroke-width:3.5;stroke-dasharray:90 18 14 18}
 .ga marker path{fill:var(--ink-2);stroke:none}
 @media (max-width:640px){
   .ga-plan text{font-size:96px}
@@ -93,11 +119,13 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
   .ga-side .solid{stroke-width:9}
 }
 
-/* plotting: one orchestrated moment on load */
-.plot .solid{stroke-dasharray:1 1;stroke-dashoffset:1;animation:plot 1.15s cubic-bezier(.65,0,.3,1) forwards;animation-delay:calc(.15s + var(--i,0) * .16s)}
-.plot .late{opacity:0;animation:appear .5s ease-out forwards;animation-delay:calc(1.55s + var(--i,0) * .09s)}
+/* plotting: one orchestrated moment on load, while the name widens */
+.motion .ga .solid{stroke-dasharray:1 1;stroke-dashoffset:1;animation:plot 1.15s var(--ease) forwards;animation-delay:calc(.15s + var(--i,0) * .16s)}
+.motion .ga .late{opacity:0;animation:appear .5s ease-out forwards;animation-delay:calc(1.55s + var(--i,0) * .09s)}
+.motion .name{animation:widen 1.6s var(--ease) .2s both}
 @keyframes plot{to{stroke-dashoffset:0}}
 @keyframes appear{to{opacity:1}}
+@keyframes widen{from{font-stretch:62%;letter-spacing:0;opacity:0}20%{opacity:1}to{font-stretch:125%;letter-spacing:-.035em}}
 
 /* title block */
 .block{border:1.5px solid var(--ink);display:grid;grid-template-columns:auto minmax(0,1fr)}
@@ -109,9 +137,10 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
 .name{font-weight:800;font-stretch:125%;font-size:var(--t-name);line-height:.86;letter-spacing:-.035em;padding:18px 14px 14px}
 .role{font-size:var(--t-lead);line-height:1.3;font-stretch:96%;text-wrap:balance}
 .actions{display:flex;flex-wrap:wrap;gap:10px;padding:14px}
-.btn{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;font:600 var(--t-xs)/1 Archivo,sans-serif;font-stretch:108%;text-decoration:none;border:1.5px solid var(--ink);border-radius:2px;color:var(--ink);background:transparent}
-.btn.primary{background:var(--chromate);border-color:var(--chromate-ink);color:var(--ink)}
-.btn:hover{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.btn{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;font:600 var(--t-xs)/1 Archivo,sans-serif;font-stretch:108%;text-decoration:none;border:1.5px solid var(--ink);border-radius:2px;color:var(--ink);background:transparent;transition:background-color .25s,color .25s,border-color .25s}
+.btn:hover{background:var(--ink);color:var(--sheet)}
+.btn.primary{background:var(--ink);color:var(--sheet)}
+.btn.primary:hover{background:transparent;color:var(--ink)}
 
 /* ---------- intro ---------- */
 .intro{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:24px var(--gutter);padding:clamp(48px,7vw,112px) 0 clamp(16px,3vw,40px)}
@@ -123,7 +152,9 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
 
 /* ---------- projects ---------- */
 .project{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:clamp(28px,3vw,48px) clamp(24px,3vw,56px)}
-.project > header{grid-column:1 / -1;display:grid;gap:8px;padding-bottom:clamp(18px,2.4vw,32px);border-bottom:1px solid var(--line)}
+.project > header{grid-column:1 / -1;position:relative;display:grid;gap:8px;padding-bottom:clamp(18px,2.4vw,32px)}
+.project > header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--line);transform-origin:0 50%;transition:transform 1.3s var(--ease)}
+.motion .project > header:not(.drawn)::after{transform:scaleX(0)}
 .project h2{font-size:var(--t-h2);line-height:1;font-weight:700;font-stretch:118%;letter-spacing:-.03em;text-wrap:balance}
 .project .who{font-size:var(--t-body);color:var(--ink-2)}
 .project .text{grid-column:1 / span 5;display:grid;gap:22px;align-content:start;position:sticky;top:84px}
@@ -131,7 +162,7 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
 .project .text > p{max-width:60ch}
 .project .text > p:first-child{font-size:var(--t-lead);line-height:1.42}
 .project ul{padding-left:1.1em;display:grid;gap:10px;max-width:60ch}
-.project li::marker{color:var(--chromate-ink)}
+.project li::marker{color:var(--ink-2)}
 @media (max-width:1000px){.project .text,.project .views{grid-column:1 / -1;position:static}}
 
 /* parts-list style spec table */
@@ -141,16 +172,17 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
 .specs dd{font-variant-numeric:tabular-nums;font-weight:500}
 .specs dt:first-of-type,.specs dd:first-of-type{border-top:0}
 
-/* drawing views: dark CAD viewports on the sheet */
+/* drawing views: CAD viewports on the sheet, faded in once loaded */
 .view{display:grid;gap:10px}
-.view .slot{position:relative;width:100%;background:var(--viewport);aspect-ratio:16 / 10;min-height:340px;border:1.5px solid var(--ink);overflow:hidden}
+.view .slot{position:relative;width:100%;background:var(--viewport);aspect-ratio:16 / 10;min-height:340px;border:1.5px solid var(--line);overflow:hidden}
 .view.tall .slot{aspect-ratio:4 / 3}
-.view .slot iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-.view .wait{position:absolute;inset:0;display:grid;place-items:center;color:#9ba1a8;font-size:var(--t-xs)}
+.view .slot iframe{position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity .8s var(--ease)}
+.view .slot iframe.ready{opacity:1}
+.view .wait{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-2);font-size:var(--t-xs)}
 .view figcaption{font-size:var(--t-sm);color:var(--ink-2);display:flex;gap:10px;align-items:baseline}
 .view figcaption b{font-weight:700;font-stretch:112%;color:var(--ink);white-space:nowrap}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.pair img{width:100%;aspect-ratio:4 / 3;object-fit:cover;border:1.5px solid var(--ink);background:#fff}
+.pair img{width:100%;aspect-ratio:4 / 3;object-fit:cover;border:1.5px solid var(--line);background:#fff}
 @media (max-width:560px){.view .slot,.view.tall .slot{min-height:0;aspect-ratio:4 / 5}.pair{grid-template-columns:1fr}}
 
 /* ---------- experience: revision block ---------- */
@@ -161,7 +193,7 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
 .revs th{text-align:left;font-weight:600;font-size:var(--t-sm);color:var(--ink-2);padding:10px 16px 10px 0;border-bottom:1.5px solid var(--ink)}
 .revs td{vertical-align:top;padding:16px 16px 16px 0;border-bottom:1px solid var(--line)}
 .revs .rev{font-weight:800;font-stretch:125%;font-size:var(--t-h3);line-height:1;width:2.2em}
-.revs tr.current .rev span{background:var(--chromate);padding:2px 8px;margin-left:-8px}
+.revs tr.current .rev span{background:var(--accent);color:var(--midnight);padding:2px 8px;margin-left:-8px}
 .revs .when{width:11em;white-space:nowrap;color:var(--ink-2);font-variant-numeric:tabular-nums}
 .revs .what b{display:block;font-size:var(--t-body);font-weight:650}
 .revs .what span{color:var(--ink-2)}
@@ -195,11 +227,11 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
 /* ---------- contact ---------- */
 .contact{padding:clamp(56px,8vw,128px) 0 clamp(40px,5vw,72px)}
 .contact h2{font-size:var(--t-h2);font-weight:700;font-stretch:118%;letter-spacing:-.03em;line-height:1;max-width:16ch;text-wrap:balance}
-.mail{display:inline-block;margin:clamp(20px,3vw,36px) 0;font-weight:800;font-stretch:125%;font-size:clamp(1.5rem,.6rem + 4.2vw,4.75rem);letter-spacing:-.03em;line-height:1;color:var(--ink);text-decoration-color:var(--chromate);text-decoration-thickness:.09em;text-underline-offset:.14em;overflow-wrap:anywhere}
-.mail:hover{text-decoration-color:var(--ink)}
+.mail{display:inline-block;margin:clamp(20px,3vw,36px) 0;font-weight:800;font-stretch:125%;font-size:clamp(1.5rem,.6rem + 4.2vw,4.75rem);letter-spacing:-.03em;line-height:1;color:var(--ink);text-decoration-color:var(--accent);text-decoration-thickness:.09em;text-underline-offset:.14em;overflow-wrap:anywhere}
+.mail:hover{color:var(--accent)}
 .reach{display:flex;flex-wrap:wrap;gap:12px 32px;font-size:var(--t-body)}
 .reach span{color:var(--ink-2)}
-.legal{margin-top:clamp(40px,5vw,72px);padding-top:18px;border-top:1px solid color-mix(in srgb,var(--ink) 25%,transparent);font-size:var(--t-sm);color:var(--ink-2);max-width:88ch}
+.legal{margin-top:clamp(40px,5vw,72px);padding-top:18px;border-top:1px solid var(--rule);font-size:var(--t-sm);color:var(--ink-2);max-width:88ch}
 </style>
 </head>
 <body>
@@ -218,7 +250,7 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
 </header>
 
 <main id="top">
-<div class="wrap">
+<div class="daylight"><div class="wrap">
 
   <!-- ===== hero: general-arrangement drawing with title block ===== -->
   <section class="sheet hero" aria-label="Introduction">
@@ -310,6 +342,9 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
       </div>
     </div>
   </section>
+</div></div>
+
+<div class="wrap">
 
   <!-- ===== intro ===== -->
   <section class="intro" aria-labelledby="intro-h">
@@ -321,7 +356,7 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
     </div>
   </section>
 
-  <div id="projects" data-accent="#B9C04A">
+  <div id="projects" data-accent="#F8C61E">
 
   <!-- ===== Counter-UAS ===== -->
   <article class="sheet project" aria-labelledby="p-cuas">
@@ -588,10 +623,50 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
 
 <script>
 (() => {
-  // Plot the hero drawing once, unless the visitor asked for less motion.
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    document.querySelectorAll('.ga').forEach(svg => svg.classList.add('plot'));
-  }
+  // Turn the bar dark once the hero's bottom edge has passed under it.
+  const bar = document.querySelector('.bar');
+  const day = document.querySelector('.daylight');
+  let ticking = false;
+  const tone = () => {
+    ticking = false;
+    bar.classList.toggle('night', day.getBoundingClientRect().bottom < bar.offsetHeight);
+  };
+  addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(tone); } }, { passive: true });
+  addEventListener('resize', tone);
+  tone();
+
+  // Slide a marker under the nav link for the section in the middle of the screen.
+  const wrap = bar.querySelector('.wrap');
+  const links = [...bar.querySelectorAll('nav a')];
+  const mark = document.createElement('span');
+  mark.className = 'mark';
+  mark.setAttribute('aria-hidden', 'true');
+  wrap.append(mark);
+  let current = null;
+  const place = () => {
+    links.forEach(l => l === current ? l.setAttribute('aria-current', 'location') : l.removeAttribute('aria-current'));
+    if (!current || !current.offsetWidth) { mark.classList.remove('on'); return; }
+    const r = current.getBoundingClientRect();
+    if (!mark.classList.contains('on')) { mark.style.transition = 'none'; requestAnimationFrame(() => mark.style.transition = ''); }
+    mark.style.setProperty('--x', (r.left - wrap.getBoundingClientRect().left) + 'px');
+    mark.style.setProperty('--w', r.width);
+    mark.classList.add('on');
+  };
+  const inView = new Set();
+  const spy = new IntersectionObserver(es => {
+    es.forEach(e => e.isIntersecting ? inView.add(e.target) : inView.delete(e.target));
+    const el = [...inView][0];
+    current = el ? links.find(l => l.hash === '#' + el.id) : null;
+    place();
+  }, { rootMargin: '-50% 0px -50% 0px' });
+  links.forEach(l => { const el = document.querySelector(l.hash); if (el) spy.observe(el); });
+  addEventListener('resize', place);
+
+  // Draw each project's header rule as the sheet comes into view.
+  const rules = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('drawn'); rules.unobserve(e.target); }
+  }), { threshold: .6 });
+  document.querySelectorAll('.project > header').forEach(h => rules.observe(h));
 
   // Load each viewer as it approaches, and unload it once it is far away,
   // so only a handful of WebGL contexts are alive at any time.
@@ -602,6 +677,7 @@ p,ul,ol,dl,h1,h2,h3,figure{margin:0}
     const f = document.createElement('iframe');
     f.title = v.dataset.title || '';
     f.src = v.dataset.view;
+    f.addEventListener('load', () => f.classList.add('ready'), { once: true });
     slot.append(f);
   };
   const unload = (v) => { const f = v.querySelector('iframe'); if (f) f.remove(); };

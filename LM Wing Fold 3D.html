@@ -142,7 +142,7 @@ renderer.toneMappingExposure = 1.05;
 host.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0d0f11).lerp(new THREE.Color(window.ACCENT || 0x0d0f11), .05);
+scene.background = new THREE.Color(0x0d0f11);
 scene.add(root);
 scene.add(new THREE.HemisphereLight(0xcfe0f0, 0x27313a, 1.15));
 const key = new THREE.DirectionalLight(0xffffff, 2.1);
