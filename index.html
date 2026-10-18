@@ -98,7 +98,7 @@ main{overflow-x:clip}
 @media (min-width:1201px){main{padding-left:var(--tree-w)}}
 
 /* ---------- workbench chrome: menu bar ---------- */
-.bar{position:sticky;top:0;z-index:30;height:var(--bar-h);background:rgba(10,13,19,.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--hair)}
+.bar{position:sticky;top:0;z-index:500;height:var(--bar-h);background:rgba(13,16,23,.92);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--hair)}
 .bar .wrap{position:relative;display:flex;align-items:center;gap:24px;height:100%;max-width:none}
 .bar-name{display:flex;align-items:center;gap:10px;font:600 1rem/1 var(--f-head);letter-spacing:.02em;color:var(--ink);text-decoration:none}
 .bar-name::before{content:"";width:13px;height:13px;border:1px solid var(--ink);background:linear-gradient(135deg,transparent 44%,var(--cyan) 44% 56%,transparent 56%)}
@@ -244,7 +244,7 @@ html .sheet.arrived{animation:arrive 1.2s ease-out}
 .sheet{position:relative;background:var(--panel);border:1px solid var(--hair);margin:clamp(28px,4vw,56px) 0;padding:var(--sheet-pad)}
 
 /* ---------- hero: an assembly of drawing views and a title block ---------- */
-.hero{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);grid-template-areas:"plan side" "plan block";margin-bottom:0;padding:0}
+.hero{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);grid-template-areas:"plan side" "plan block";margin-top:clamp(2.5rem,4vw,56px);margin-bottom:0;padding:0}
 .hero .cell{position:relative;background:linear-gradient(rgba(241,245,249,.03) 1px,transparent 1px) 0 0/20px 20px,linear-gradient(90deg,rgba(241,245,249,.03) 1px,transparent 1px) 0 0/20px 20px,var(--panel)}
 .hero .cell-plan{grid-area:plan;display:grid;align-items:center;padding:clamp(20px,3vw,48px);border-right:1px solid var(--hair)}
 .hero .cell-side{grid-area:side;padding:clamp(16px,2vw,32px);border-bottom:1px solid var(--hair)}
@@ -1709,7 +1709,10 @@ html .sheet.arrived{animation:arrive 1.2s ease-out}
         line.setAttribute('x2', fx); line.setAttribute('y2', fy);
         dot.setAttribute('cx', fx); dot.setAttribute('cy', fy); dot.setAttribute('r', 3);
         trails.append(line, dot);
-        return { el, x: 120 * sx * k, y: 80 * sy * k, fx, fy, line };
+        // The drawing views explode outward and down; nothing starts above the hero's top edge, under the bar.
+        const view = !block.contains(el);
+        const x = (view ? 90 : 120) * sx * k, y = Math.max(view ? 40 * k : 80 * sy * k, hb.top - r.top);
+        return { el, x, y, fx, fy, line };
       });
       const els = rigs.map(r => r.el);
       const drawTrails = () => rigs.forEach(r => {
