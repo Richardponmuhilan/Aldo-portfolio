@@ -1411,7 +1411,7 @@ html .sheet.arrived{animation:arrive 1.2s ease-out}
   <span class="s-xy" aria-hidden="true">X: <b data-hud="x">0000.0</b> mm | Y: <b data-hud="y">0000.0</b> mm</span>
   <span class="s-prog" aria-hidden="true"><span class="lbl">Solver progress:</span> <b data-hud="p">0%</b><i class="track"><b></b></i></span>
   <span class="grow" aria-hidden="true"></span>
-  <button class="mode" type="button" aria-pressed="false" aria-label="FEA Von Mises mode">[MODE: <b>CAD ASSEMBLY</b> / <b>FEA VON MISES</b>]</button>
+  <button class="mode" type="button" aria-pressed="true" aria-label="FEA Von Mises mode">[MODE: <b>CAD ASSEMBLY</b> / <b>FEA VON MISES</b>]</button>
 </div>
 
 <a class="to-top" href="#top" aria-label="Back to top">
@@ -1567,6 +1567,8 @@ html .sheet.arrived{animation:arrive 1.2s ease-out}
 
   // FEA mode: mesh on the section heads, Von Mises contour on the card borders.
   const mode = $('.status .mode');
+  // Start in whichever mode the button's markup says (aria-pressed="true" means FEA).
+  root.classList.toggle('fea-mode', mode.getAttribute('aria-pressed') === 'true');
   mode.addEventListener('click', () => mode.setAttribute('aria-pressed', root.classList.toggle('fea-mode')));
 
   // Count the title-block figures up while the parts mate.
